@@ -1,0 +1,29 @@
+{
+  "name": "medigraph-ai",
+  "version": "1.0.0",
+  "description": "Longitudinal Health-Document Intelligence Platform",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "start:backend": "npm run start --workspace=backend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "test:backend": "npm run test --workspace=backend",
+    "build:backend": "npm run build --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "test": "npm run test --workspace=backend",
+    "lint": "echo 'Linting workspaces...'"
+  },
+  "keywords": [
+    "health-tech",
+    "medical-ai",
+    "document-intelligence",
+    "rag",
+    "longitudinal-analytics"
+  ],
+  "author": "MediGraph AI Engineering Team",
+  "license": "UNLICENSED"
+}
