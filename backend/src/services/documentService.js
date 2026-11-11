@@ -1,6 +1,7 @@
 import { prisma } from '../db/prisma.js';
 import { validateFileSignature, computeSha256, storageService } from './storageService.js';
 import { logAuditEvent } from './auditService.js';
+import { enqueueDocumentJob } from '../queue/documentQueue.js';
 import { ConflictError, NotFoundError, ForbiddenError, ValidationError } from '../utils/errors.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -12,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
  * - Prevents duplicate uploads for the user
  * - Stores the file securely
  * - Creates Document and ProcessingJob records
+ * - Enqueues background OCR processing job
  */
 export async function uploadDocument({
   userId,
@@ -59,7 +61,7 @@ export async function uploadDocument({
         mimeType: verifiedMimeType,
         fileSize,
         sha256Checksum,
-        processingStatus: 'UPLOADED'
+        processingStatus: 'QUEUED'
       }
     });
 
@@ -77,6 +79,19 @@ export async function uploadDocument({
 
     return { doc, job };
   });
+
+  // Enqueue background processing job
+  const { queueJobId } = await enqueueDocumentJob(document.doc.id, {
+    originalFilename,
+    fileSize
+  });
+
+  if (queueJobId) {
+    await prisma.processingJob.update({
+      where: { id: document.job.id },
+      data: { queueJobId }
+    });
+  }
 
   await logAuditEvent({
     userId,
@@ -98,12 +113,13 @@ export async function uploadDocument({
       originalFilename: document.doc.originalFilename,
       mimeType: document.doc.mimeType,
       fileSize: document.doc.fileSize,
-      processingStatus: document.doc.processingStatus,
+      processingStatus: 'QUEUED',
       uploadedAt: document.doc.uploadedAt
     },
     job: {
       id: document.job.id,
-      status: document.job.status
+      queueJobId,
+      status: 'PENDING'
     }
   };
 }
