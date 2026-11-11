@@ -15,6 +15,7 @@ import analyticsRoutes from './routes/analyticsRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import summaryRoutes from './routes/summaryRoutes.js';
 import privacyRoutes from './routes/privacyRoutes.js';
+import { authRateLimiter, uploadRateLimiter, chatRateLimiter } from './middleware/rateLimiter.js';
 
 export function createApp() {
   const app = express();
@@ -74,11 +75,11 @@ export function createApp() {
   });
 
   // API Route Handlers
-  app.use('/api/v1/auth', authRoutes);
-  app.use('/api/v1/documents', documentRoutes);
+  app.use('/api/v1/auth', authRateLimiter, authRoutes);
+  app.use('/api/v1/documents', uploadRateLimiter, documentRoutes);
   app.use('/api/v1/timeline', timelineRoutes);
   app.use('/api/v1/analytics', analyticsRoutes);
-  app.use('/api/v1/chat', chatRoutes);
+  app.use('/api/v1/chat', chatRateLimiter, chatRoutes);
   app.use('/api/v1/summaries', summaryRoutes);
   app.use('/api/v1/privacy', privacyRoutes);
   app.use('/api/v1', extractionRoutes);

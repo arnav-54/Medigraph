@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: medigraph-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: medigraph
+      POSTGRES_PASSWORD: medigraph_dev_secret
+      POSTGRES_DB: medigraph_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medigraph -d medigraph_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - medigraph-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: medigraph-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - medigraph-network
+
+  document-service:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/document-service.Dockerfile
+    container_name: medigraph-document-service
+    restart: unless-stopped
+    environment:
+      - PORT=8000
+      - OCR_PROVIDER=pymupdf
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - medigraph-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/backend.Dockerfile
+    container_name: medigraph-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - DATABASE_URL=postgresql://medigraph:medigraph_dev_secret@postgres:5432/medigraph_db?schema=public
+      - REDIS_URL=redis://redis:6379
+      - DOCUMENT_SERVICE_URL=http://document-service:8000
+      - CORS_ORIGIN=http://localhost
+      - JWT_ACCESS_SECRET=medigraph_prod_access_secret_super_long_and_secure_key_32_chars
+      - JWT_REFRESH_SECRET=medigraph_prod_refresh_secret_super_long_and_secure_key_32_chars
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      document-service:
+        condition: service_healthy
+    volumes:
+      - medigraph-uploads:/app/storage/uploads
+    networks:
+      - medigraph-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/frontend.Dockerfile
+    container_name: medigraph-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - medigraph-network
+
+networks:
+  medigraph-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  medigraph-uploads:
