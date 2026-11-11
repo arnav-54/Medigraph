@@ -74,3 +74,4 @@ export const logger = {
   error: (msg, meta = {}) => baseLogger.error(sanitizeLogData(meta), msg),
   debug: (msg, meta = {}) => baseLogger.debug(sanitizeLogData(meta), msg)
 };
+

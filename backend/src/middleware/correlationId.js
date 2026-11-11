@@ -9,3 +9,4 @@ export function correlationIdMiddleware(req, res, next) {
   res.setHeader('X-Correlation-ID', correlationId);
   next();
 }
+

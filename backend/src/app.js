@@ -7,6 +7,8 @@ import { correlationIdMiddleware } from './middleware/correlationId.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { NotFoundError } from './utils/errors.js';
+import authRoutes from './routes/authRoutes.js';
+import documentRoutes from './routes/documentRoutes.js';
 
 export function createApp() {
   const app = express();
@@ -45,7 +47,6 @@ export function createApp() {
   });
 
   app.get('/health/ready', async (req, res) => {
-    // Health check returns ready; database check will be verified when DB is active
     res.status(200).json({
       status: 'pass',
       service: 'medigraph-backend',
@@ -66,6 +67,10 @@ export function createApp() {
     });
   });
 
+  // API Route Handlers
+  app.use('/api/v1/auth', authRoutes);
+  app.use('/api/v1/documents', documentRoutes);
+
   // 404 Handler for undefined routes
   app.use((req, res, next) => {
     next(new NotFoundError(`Route ${req.method} ${req.originalUrl} not found`));
@@ -78,3 +83,4 @@ export function createApp() {
 }
 
 export const app = createApp();
+

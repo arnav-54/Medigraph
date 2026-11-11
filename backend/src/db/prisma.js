@@ -40,3 +40,4 @@ export async function disconnectPrisma() {
     logger.info('Database client gracefully disconnected.');
   }
 }
+
