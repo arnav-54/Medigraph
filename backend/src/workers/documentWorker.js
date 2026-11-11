@@ -1,10 +1,12 @@
 import { prisma } from '../db/prisma.js';
 import { extractDocumentPages } from '../services/extractionPipeline.js';
+import { extractStructuredMedicalData } from '../services/medicalExtractor.js';
+import { persistExtractedResults } from '../services/extractionReviewService.js';
 import { logger } from '../utils/logger.js';
 import { localFallbackEmitter } from '../queue/documentQueue.js';
 
 /**
- * Idempotently executes document parsing and OCR extraction.
+ * Idempotently executes document parsing, OCR extraction, and structured medical data extraction.
  */
 export async function executeDocumentProcessing(documentId) {
   logger.info('Starting document processing task', { documentId });
@@ -74,36 +76,56 @@ export async function executeDocumentProcessing(documentId) {
         });
       }
 
-      const finalStatus = extractionResult.needs_review ? 'REVIEW_REQUIRED' : 'COMPLETED';
-
       await tx.document.update({
         where: { id: documentId },
         data: {
-          processingStatus: finalStatus,
           pageCount: extractionResult.page_count
         }
       });
-
-      if (latestJob) {
-        await tx.processingJob.update({
-          where: { id: latestJob.id },
-          data: {
-            status: 'COMPLETED',
-            completedAt: new Date(),
-            metadata: {
-              overallConfidence: extractionResult.overall_confidence,
-              pageCount: extractionResult.page_count,
-              durationMs: extractionResult.processing_time_ms
-            }
-          }
-        });
-      }
     });
+
+    // 2. Structured Medical Data Extraction from Pages
+    const structuredData = extractStructuredMedicalData(extractionResult.pages, {
+      uploadedAt: document.uploadedAt
+    });
+
+    // Persist extracted lab results and high-level medical events
+    await persistExtractedResults(document.id, document.userId, structuredData);
+
+    const hasSuspiciousValues = structuredData.results.some(r => r.isSuspicious);
+    const finalStatus = (extractionResult.needs_review || hasSuspiciousValues || structuredData.extractedCount > 0)
+      ? 'REVIEW_REQUIRED'
+      : 'COMPLETED';
+
+    await prisma.$transaction([
+      prisma.document.update({
+        where: { id: documentId },
+        data: { processingStatus: finalStatus }
+      }),
+      ...(latestJob
+        ? [
+            prisma.processingJob.update({
+              where: { id: latestJob.id },
+              data: {
+                status: 'COMPLETED',
+                completedAt: new Date(),
+                metadata: {
+                  overallConfidence: extractionResult.overall_confidence,
+                  pageCount: extractionResult.page_count,
+                  extractedCount: structuredData.extractedCount,
+                  durationMs: extractionResult.processing_time_ms
+                }
+              }
+            })
+          ]
+        : [])
+    ]);
 
     logger.info('Document extraction pipeline succeeded', {
       documentId,
       pageCount: extractionResult.page_count,
-      status: extractionResult.needs_review ? 'REVIEW_REQUIRED' : 'COMPLETED'
+      extractedCount: structuredData.extractedCount,
+      status: finalStatus
     });
   } catch (error) {
     logger.error('Document processing pipeline failed', {
