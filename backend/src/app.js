@@ -12,6 +12,9 @@ import documentRoutes from './routes/documentRoutes.js';
 import extractionRoutes from './routes/extractionRoutes.js';
 import timelineRoutes from './routes/timelineRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
+import summaryRoutes from './routes/summaryRoutes.js';
+import privacyRoutes from './routes/privacyRoutes.js';
 
 export function createApp() {
   const app = express();
@@ -75,6 +78,9 @@ export function createApp() {
   app.use('/api/v1/documents', documentRoutes);
   app.use('/api/v1/timeline', timelineRoutes);
   app.use('/api/v1/analytics', analyticsRoutes);
+  app.use('/api/v1/chat', chatRoutes);
+  app.use('/api/v1/summaries', summaryRoutes);
+  app.use('/api/v1/privacy', privacyRoutes);
   app.use('/api/v1', extractionRoutes);
 
   // 404 Handler for undefined routes
