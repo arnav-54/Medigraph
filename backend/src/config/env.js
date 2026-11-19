@@ -6,7 +6,8 @@ dotenv.config();
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.string().transform(val => parseInt(val, 10)).default('4000'),
-  DATABASE_URL: z.string().default('postgresql://medigraph:medigraph_dev_secret@localhost:5432/medigraph_db?schema=public'),
+  DATABASE_URL: z.string().default('mongodb://127.0.0.1:27017/medigraph_db'),
+  MONGODB_URI: z.string().default('mongodb://127.0.0.1:27017/medigraph_db'),
   REDIS_URL: z.string().default('redis://localhost:6379'),
   JWT_ACCESS_SECRET: z.string().default('medigraph_super_secure_access_secret_key_minimum_32_chars_long'),
   JWT_REFRESH_SECRET: z.string().default('medigraph_super_secure_refresh_secret_key_minimum_32_chars_long'),
@@ -15,7 +16,7 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   UPLOAD_DIR: z.string().default('./storage/uploads'),
   MAX_FILE_SIZE_BYTES: z.string().transform(val => parseInt(val, 10)).default('15728640'), // 15MB
-  DOCUMENT_SERVICE_URL: z.string().default('http://localhost:8000'),
+  DOCUMENT_SERVICE_URL: z.string().default('http://127.0.0.1:8000'),
   GEMINI_API_KEY: z.string().optional().default(''),
 });
 

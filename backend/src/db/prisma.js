@@ -1,43 +1,55 @@
-import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger.js';
 import { env } from '../config/env.js';
+import { connectMongo, disconnectMongo, mongoDb, isMongoConnected } from './mongoStore.js';
+import { localDb } from './localStore.js';
 
-let prismaInstance = null;
+let isMongoActive = false;
 
-export function getPrismaClient() {
-  if (!prismaInstance) {
-    prismaInstance = new PrismaClient({
-      log: env.NODE_ENV === 'development'
-        ? [
-            { emit: 'event', level: 'query' },
-            { emit: 'event', level: 'info' },
-            { emit: 'event', level: 'warn' },
-            { emit: 'event', level: 'error' }
-          ]
-        : [{ emit: 'event', level: 'error' }]
-    });
-
-    if (env.NODE_ENV === 'development') {
-      prismaInstance.$on('query', (e) => {
-        // Redact any params from raw queries to prevent PHI exposure
-        logger.debug('Prisma Query', { durationMs: e.duration });
-      });
+// Transparent Proxy that routes to MongoDB when connected, or localDb as fallback
+export const prisma = new Proxy({}, {
+  get(target, prop) {
+    if (prop === '$transaction') {
+      return async (arg) => {
+        if (isMongoActive) {
+          return mongoDb.$transaction(arg);
+        }
+        return localDb.$transaction(arg);
+      };
     }
 
-    prismaInstance.$on('error', (e) => {
-      logger.error('Prisma Database Error', { target: e.target });
-    });
-  }
+    if (prop === '$disconnect') {
+      return async () => {
+        if (isMongoActive) {
+          await disconnectMongo();
+        }
+      };
+    }
 
-  return prismaInstance;
+    const model = prop.toString();
+    if (isMongoActive && mongoDb[model]) {
+      return mongoDb[model];
+    }
+    return localDb[model] || {};
+  }
+});
+
+export async function checkDatabaseConnection() {
+  try {
+    const mongoUri = env.MONGODB_URI || env.DATABASE_URL || 'mongodb://127.0.0.1:27017/medigraph_db';
+    await connectMongo(mongoUri);
+    isMongoActive = true;
+    logger.info(`Connected to MongoDB database (${mongoUri})`);
+    return true;
+  } catch (err) {
+    isMongoActive = false;
+    logger.info('MongoDB offline. Seamlessly running in Standalone Local Store mode (storage/local-db.json)');
+    return false;
+  }
 }
 
-export const prisma = getPrismaClient();
+// Trigger background connectivity check on startup
+checkDatabaseConnection().catch(() => {});
 
 export async function disconnectPrisma() {
-  if (prismaInstance) {
-    await prismaInstance.$disconnect();
-    logger.info('Database client gracefully disconnected.');
-  }
+  await prisma.$disconnect();
 }
-
