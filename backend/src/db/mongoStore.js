@@ -64,49 +64,8 @@ async function initMongoCollections() {
     await db.collection('documents').createIndex({ id: 1 }, { unique: true }).catch(() => {});
     await db.collection('labTests').createIndex({ canonicalName: 1 }, { unique: true }).catch(() => {});
     await db.collection('labResults').createIndex({ userId: 1, testDate: -1 }).catch(() => {});
-
-    // Seed default data from local-db.json if individual collections are empty
-    const localFile = path.resolve('./storage/local-db.json');
-    if (fs.existsSync(localFile)) {
-      try {
-        const seedData = JSON.parse(fs.readFileSync(localFile, 'utf-8'));
-
-        if ((await db.collection('users').countDocuments()) === 0 && seedData.users?.length) {
-          await db.collection('users').insertMany(seedData.users).catch(() => {});
-        }
-        if ((await db.collection('labTests').countDocuments()) === 0 && seedData.labTests?.length) {
-          await db.collection('labTests').insertMany(seedData.labTests).catch(() => {});
-        }
-        if ((await db.collection('documents').countDocuments()) === 0 && seedData.documents?.length) {
-          await db.collection('documents').insertMany(seedData.documents).catch(() => {});
-        }
-        if ((await db.collection('documentPages').countDocuments()) === 0 && seedData.documentPages?.length) {
-          await db.collection('documentPages').insertMany(seedData.documentPages).catch(() => {});
-        }
-        if ((await db.collection('extractedRecords').countDocuments()) === 0 && seedData.extractedRecords?.length) {
-          await db.collection('extractedRecords').insertMany(seedData.extractedRecords).catch(() => {});
-        }
-        if ((await db.collection('labResults').countDocuments()) === 0 && seedData.labResults?.length) {
-          await db.collection('labResults').insertMany(seedData.labResults).catch(() => {});
-        }
-        if ((await db.collection('medicalEvents').countDocuments()) === 0 && seedData.medicalEvents?.length) {
-          await db.collection('medicalEvents').insertMany(seedData.medicalEvents).catch(() => {});
-        }
-        if ((await db.collection('chatSessions').countDocuments()) === 0 && seedData.chatSessions?.length) {
-          await db.collection('chatSessions').insertMany(seedData.chatSessions).catch(() => {});
-        }
-        if ((await db.collection('chatMessages').countDocuments()) === 0 && seedData.chatMessages?.length) {
-          await db.collection('chatMessages').insertMany(seedData.chatMessages).catch(() => {});
-        }
-        if ((await db.collection('generatedSummaries').countDocuments()) === 0 && seedData.generatedSummaries?.length) {
-          await db.collection('generatedSummaries').insertMany(seedData.generatedSummaries).catch(() => {});
-        }
-      } catch (seedErr) {
-        logger.warn(`Initial seed skipped: ${seedErr.message}`);
-      }
-    }
   } catch (err) {
-    logger.warn(`Mongo index/seed warning: ${err.message}`);
+    logger.warn(`Mongo index warning: ${err.message}`);
   }
 }
 
