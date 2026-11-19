@@ -1,11 +1,15 @@
 /**
- * Standardized API client for MediGraph AI with credentials and correlation tracking.
+ * Standardized API client for MediGraph AI with credentials, auto-refresh, and correlation tracking.
  */
-export async function apiRequest(endpoint, options = {}) {
+let isRefreshing = false;
+
+export async function apiRequest(endpoint, options = {}, isRetry = false) {
   const correlationId = 'client-' + Math.random().toString(36).substring(2, 12);
+  const token = typeof window !== 'undefined' ? localStorage.getItem('medigraph_token') : null;
 
   const headers = {
     'X-Correlation-ID': correlationId,
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     ...(options.headers || {})
   };
 
@@ -20,6 +24,33 @@ export async function apiRequest(endpoint, options = {}) {
     headers,
     credentials: 'include' // sends HttpOnly session cookies
   });
+
+  // Attempt automatic session refresh on 401 if not already refreshing and not auth routes
+  if (response.status === 401 && !isRetry && !endpoint.includes('/api/v1/auth/login') && !endpoint.includes('/api/v1/auth/refresh')) {
+    if (!isRefreshing) {
+      isRefreshing = true;
+      try {
+        const refreshRes = await fetch('/api/v1/auth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          const newToken = refreshData.data?.tokens?.accessToken;
+          if (newToken && typeof window !== 'undefined') {
+            localStorage.setItem('medigraph_token', newToken);
+            isRefreshing = false;
+            return apiRequest(endpoint, options, true);
+          }
+        }
+      } catch {
+        // Refresh failed, proceed to handle original 401
+      } finally {
+        isRefreshing = false;
+      }
+    }
+  }
 
   const isJson = response.headers.get('content-type')?.includes('application/json');
   const data = isJson ? await response.json() : await response.text();
@@ -42,3 +73,4 @@ export const api = {
   patch: (url, body, options) => apiRequest(url, { ...options, method: 'PATCH', body }),
   delete: (url, options) => apiRequest(url, { ...options, method: 'DELETE' })
 };
+

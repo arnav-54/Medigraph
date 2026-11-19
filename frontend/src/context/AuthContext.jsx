@@ -29,6 +29,9 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const res = await api.post('/api/v1/auth/login', { email, password });
     if (res.success && res.data?.user) {
+      if (res.data.tokens?.accessToken) {
+        localStorage.setItem('medigraph_token', res.data.tokens.accessToken);
+      }
       setUser(res.data.user);
     }
     return res;
@@ -37,6 +40,9 @@ export function AuthProvider({ children }) {
   const register = async (email, password, fullName) => {
     const res = await api.post('/api/v1/auth/register', { email, password, fullName });
     if (res.success && res.data?.user) {
+      if (res.data.tokens?.accessToken) {
+        localStorage.setItem('medigraph_token', res.data.tokens.accessToken);
+      }
       setUser(res.data.user);
     }
     return res;
@@ -48,6 +54,7 @@ export function AuthProvider({ children }) {
     } catch {
       // Ignore errors on logout
     }
+    localStorage.removeItem('medigraph_token');
     setUser(null);
   };
 
@@ -65,3 +72,4 @@ export function useAuth() {
   }
   return context;
 }
+
