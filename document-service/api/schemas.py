@@ -21,3 +21,4 @@ class HealthResponse(BaseModel):
     status: str
     service: str
     ocr_provider: str
+

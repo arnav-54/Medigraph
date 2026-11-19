@@ -57,3 +57,4 @@ def test_process_file_endpoint():
     assert data["overall_confidence"] >= 0.90
     assert len(data["pages"]) == 1
     assert "Hemoglobin" in data["pages"][0]["text"]
+

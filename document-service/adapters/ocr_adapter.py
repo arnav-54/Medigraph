@@ -105,3 +105,4 @@ class SyntheticMockAdapter(BaseOCRAdapter):
             "width": 800,
             "height": 1100
         }
+
