@@ -2,8 +2,16 @@ import { MongoClient } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
+import dns from 'dns';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
+
+// Ensure DNS SRV lookups work reliably on all macOS/WiFi networks for mongodb+srv
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch {
+  // Ignore if permissions or platform restricts DNS override
+}
 
 let client = null;
 let db = null;
