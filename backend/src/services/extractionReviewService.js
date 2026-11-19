@@ -252,3 +252,4 @@ export async function verifyAllDocumentExtractions(userId, documentId, ipAddress
 
   return { success: true, message: 'All extracted records verified' };
 }
+
