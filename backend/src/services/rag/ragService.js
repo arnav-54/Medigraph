@@ -1,9 +1,60 @@
 import { prisma } from '../../db/prisma.js';
+import { env } from '../../config/env.js';
 import { embeddingService, cosineSimilarity, generateDeterministicEmbedding } from './embeddingAdapter.js';
 import { matchCanonicalLabTest } from '../canonicalLabCatalog.js';
 import { logger } from '../../utils/logger.js';
 
 export const MEDICAL_DISCLAIMER = 'This response is synthesized strictly from your uploaded medical records for informational purposes and does NOT constitute medical advice, diagnosis, or treatment recommendations. Always consult a qualified physician or healthcare provider.';
+
+/**
+ * Calls Gemini Generative Language API to synthesize grounded natural answers
+ */
+async function synthesizeWithGemini(userQuery, contextExcerpts, isHindi) {
+  if (!env.GEMINI_API_KEY || env.GEMINI_API_KEY.length < 10) return null;
+
+  try {
+    const prompt = `You are MediGraph AI, a compassionate clinical health document intelligence assistant.
+Answer the patient's question strictly grounded ONLY in the provided medical report excerpts.
+Do not hallucinate or guess any lab values not present in the excerpts.
+Provide a clear, easy-to-understand response in ${isHindi ? 'simple Hindi (Devanagari/Hinglish)' : 'plain English'}.
+Always include a warm, empathetic tone and remind the patient to consult their doctor for clinical diagnosis.
+
+[PATIENT MEDICAL EXCERPTS]:
+${contextExcerpts}
+
+[PATIENT QUESTION]:
+${userQuery}`;
+
+    const modelsToTry = ['gemini-flash-latest', 'gemini-3.8-flash', 'gemini-2.5-flash'];
+    for (const model of modelsToTry) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${env.GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }]
+            }),
+            signal: AbortSignal.timeout(6000)
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (generatedText && generatedText.trim().length > 0) {
+            return generatedText.trim();
+          }
+        }
+      } catch {
+        // Continue to next model candidate
+      }
+    }
+  } catch (err) {
+    logger.warn(`Gemini synthesis fallback: ${err.message}`);
+  }
+  return null;
+}
 
 /**
  * Answers questions grounded in the user's uploaded medical records with provenance citations.
@@ -261,9 +312,10 @@ export async function queryMedicalAssistant(userId, query) {
   }));
 
   const contextExcerpts = topChunks.map(c => `[From "${c.document.originalFilename}", Page ${c.pageNumber}]: ${c.content}`).join('\n\n');
-  const answer = isHindi
+  const geminiAnswer = await synthesizeWithGemini(cleanQuery, contextExcerpts, isHindi);
+  const answer = geminiAnswer || (isHindi
     ? `आपकी सत्यापित मेडिकल रिपोर्ट्स के अनुसार:\n\n${contextExcerpts}\n\nचिकित्सीय सलाह के लिए कृपया अपने डॉक्टर से परामर्श लें।`
-    : `Based on your uploaded medical records:\n\n${contextExcerpts}\n\nPlease consult your physician for clinical interpretation.`;
+    : `Based on your uploaded medical records:\n\n${contextExcerpts}\n\nPlease consult your physician for clinical interpretation.`);
 
   return {
     answer,
