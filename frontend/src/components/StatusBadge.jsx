@@ -32,3 +32,4 @@ export function StatusBadge({ status }) {
 
   return <span className={`badge ${badgeClass}`}>{label}</span>;
 }
+
