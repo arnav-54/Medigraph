@@ -1,12 +1,15 @@
 import { RateLimitError } from '../utils/errors.js';
+import { env } from '../config/env.js';
 
 /**
  * Sliding-window in-memory rate limiter middleware.
  * Prevents brute-force credential attacks and endpoint flooding.
  */
 export function createRateLimiter(options = {}) {
-  const windowMs = options.windowMs || 15 * 60 * 1000; // 15 minutes default
-  const maxRequests = options.maxRequests || 100;
+  const isDev = env.NODE_ENV === 'development';
+  const windowMs = options.windowMs || 15 * 60 * 1000;
+  // Generous limit in development to avoid blocking local testing
+  const maxRequests = isDev ? 1000 : (options.maxRequests || 100);
   const requests = new Map();
 
   return (req, res, next) => {
@@ -40,3 +43,4 @@ export function createRateLimiter(options = {}) {
 export const authRateLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 20 });
 export const uploadRateLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 30 });
 export const chatRateLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 50 });
+

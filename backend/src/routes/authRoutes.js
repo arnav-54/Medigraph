@@ -162,7 +162,12 @@ router.get('/me', authenticate, async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: { user }
+      data: {
+        user: {
+          ...user,
+          fullName: user.profile?.fullName || null
+        }
+      }
     });
   } catch (err) {
     next(err);
