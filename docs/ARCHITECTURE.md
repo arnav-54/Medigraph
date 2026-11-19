@@ -118,3 +118,4 @@ If document processing jobs fail due to transient worker restarts:
 2. Inspect `lastError` details.
 3. Dispatch reprocessing via BullMQ retry API or re-enqueueing the document ID.
 4. The worker's idempotent cleanup deletes partial page records before re-parsing, ensuring zero duplicate records.
+

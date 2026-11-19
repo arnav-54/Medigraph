@@ -148,3 +148,4 @@ docker-compose up --build
 | `POST` | `/api/v1/summaries` | Generate editable longitudinal summary |
 | `GET` | `/api/v1/privacy/export` | Download full JSON user data export |
 | `POST` | `/api/v1/privacy/delete-account` | Permanent cascading account purge |
+

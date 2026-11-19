@@ -30,3 +30,4 @@ EXPOSE 4000
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD ["node", "backend/src/server.js"]
+

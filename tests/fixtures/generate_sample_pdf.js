@@ -86,3 +86,4 @@ if (process.argv[1] && process.argv[1].endsWith('generate_sample_pdf.js')) {
   fs.writeFileSync(targetPath, buf);
   console.log(`Created synthetic test fixture at ${targetPath} (${buf.length} bytes)`);
 }
+
