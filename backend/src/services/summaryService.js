@@ -46,12 +46,12 @@ export async function generateMedicalSummary(userId, options = {}) {
   const consultedDocs = documents.map(d => ({
     id: d.id,
     filename: d.originalFilename,
-    uploadedAt: d.uploadedAt.toISOString().slice(0, 10)
+    uploadedAt: new Date(d.uploadedAt || Date.now()).toISOString().slice(0, 10)
   }));
 
   const allLabResults = documents.flatMap(d =>
-    d.extractedRecords.flatMap(er =>
-      er.labResults.map(lr => ({
+    (d.extractedRecords || []).flatMap(er =>
+      (er.labResults || []).map(lr => ({
         ...lr,
         documentId: d.id,
         filename: d.originalFilename,
@@ -85,7 +85,8 @@ export async function generateMedicalSummary(userId, options = {}) {
   summaryText += `\n3. NOTABLE OBSERVATIONS & ELEVATED VALUES:\n`;
   if (abnormalFindings.length > 0) {
     abnormalFindings.forEach(r => {
-      summaryText += `   • ${r.testNameRaw} was recorded at ${r.rawValue} ${r.normalizedUnit || ''} on ${r.testDate.toISOString().slice(0, 10)}.\n`;
+      const dateStr = new Date(r.testDate || Date.now()).toISOString().slice(0, 10);
+      summaryText += `   • ${r.testNameRaw} was recorded at ${r.rawValue} ${r.normalizedUnit || ''} on ${dateStr}.\n`;
     });
   } else {
     summaryText += `   • All recorded values fall within their respective laboratory reference ranges.\n`;
@@ -152,3 +153,4 @@ export async function updateUserSummary(userId, summaryId, updates) {
     }
   });
 }
+
