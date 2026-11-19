@@ -8,6 +8,8 @@
     "frontend"
   ],
   "scripts": {
+    "dev": "./run.sh",
+    "start": "./run.sh",
     "start:backend": "npm run start --workspace=backend",
     "dev:backend": "npm run dev --workspace=backend",
     "test:backend": "npm run test --workspace=backend",
