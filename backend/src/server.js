@@ -2,6 +2,8 @@ import { app } from './app.js';
 import { env } from './config/env.js';
 import { logger } from './utils/logger.js';
 import { disconnectPrisma } from './db/prisma.js';
+// Register asynchronous document ingestion worker
+import './workers/documentWorker.js';
 
 const server = app.listen(env.PORT, () => {
   logger.info(`MediGraph AI Core API listening on port ${env.PORT}`, {

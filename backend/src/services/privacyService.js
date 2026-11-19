@@ -136,3 +136,4 @@ export async function deleteUserAccount(userId, password, ipAddress = null, user
     message: 'Your account and all associated medical records have been permanently purged.'
   };
 }
+

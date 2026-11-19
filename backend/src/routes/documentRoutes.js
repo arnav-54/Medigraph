@@ -7,6 +7,10 @@ import {
   getDocumentById,
   deleteDocument
 } from '../services/documentService.js';
+import {
+  getDocumentExtractions,
+  verifyAllDocumentExtractions
+} from '../services/extractionReviewService.js';
 import { storageService } from '../services/storageService.js';
 import { ValidationError } from '../utils/errors.js';
 
@@ -89,6 +93,41 @@ router.get('/:id/download', async (req, res, next) => {
     res.setHeader('Content-Type', document.mimeType);
     res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(document.originalFilename)}"`);
     res.send(buffer);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get document extractions
+router.get('/:id/extractions', async (req, res, next) => {
+  try {
+    const extractions = await getDocumentExtractions(req.user.userId, req.params.id);
+    res.status(200).json({
+      success: true,
+      data: {
+        documentId: req.params.id,
+        count: extractions.length,
+        extractions
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Bulk verify all extractions for document
+router.post('/:id/verify-all', async (req, res, next) => {
+  try {
+    const result = await verifyAllDocumentExtractions(
+      req.user.userId,
+      req.params.id,
+      req.ip,
+      req.get('user-agent')
+    );
+    res.status(200).json({
+      success: true,
+      data: result
+    });
   } catch (err) {
     next(err);
   }

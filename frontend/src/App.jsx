@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import { LanguageProvider } from './context/LanguageContext.jsx';
 import { Layout } from './components/Layout.jsx';
 
 import { LandingPage } from './pages/LandingPage.jsx';
@@ -38,37 +39,40 @@ function ProtectedRoute({ children }) {
 export function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+      <LanguageProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
-          {/* Authenticated SaaS Dashboard Routes */}
-          <Route
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/upload" element={<UploadPage />} />
-            <Route path="/documents" element={<DocumentsPage />} />
-            <Route path="/documents/:id" element={<DocumentDetailsPage />} />
-            <Route path="/documents/:id/extractions" element={<ExtractionReviewPage />} />
-            <Route path="/timeline" element={<TimelinePage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/assistant" element={<AssistantPage />} />
-            <Route path="/summaries" element={<SummariesPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-          </Route>
+            {/* Authenticated SaaS Dashboard Routes */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/upload" element={<UploadPage />} />
+              <Route path="/documents" element={<DocumentsPage />} />
+              <Route path="/documents/:id" element={<DocumentDetailsPage />} />
+              <Route path="/documents/:id/extractions" element={<ExtractionReviewPage />} />
+              <Route path="/timeline" element={<TimelinePage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/assistant" element={<AssistantPage />} />
+              <Route path="/summaries" element={<SummariesPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+            </Route>
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </LanguageProvider>
     </AuthProvider>
   );
 }
+
