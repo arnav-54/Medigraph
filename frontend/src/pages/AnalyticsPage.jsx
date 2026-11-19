@@ -7,19 +7,26 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-  ReferenceArea
+  Legend
 } from 'recharts';
 import { api } from '../api/client.js';
+import { useLanguage } from '../context/LanguageContext.jsx';
+import { BiomarkerDictionaryModal } from '../components/BiomarkerDictionaryModal.jsx';
 
 export function AnalyticsPage() {
+  const { t, lang } = useLanguage();
   const [availableTests, setAvailableTests] = useState([]);
   const [selectedTest, setSelectedTest] = useState('');
+  const [compareTest, setCompareTest] = useState('');
+  const [enableCompare, setEnableCompare] = useState(false);
   const [trendData, setTrendData] = useState(null);
+  const [compareTrendData, setCompareTrendData] = useState(null);
   const [onlyVerified, setOnlyVerified] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [dictionaryBiomarker, setDictionaryBiomarker] = useState(null);
 
-  // Load available tests
+  // Load available tests catalog
   useEffect(() => {
     async function loadTests() {
       try {
@@ -28,6 +35,9 @@ export function AnalyticsPage() {
           setAvailableTests(res.data.tests);
           if (res.data.tests.length > 0) {
             setSelectedTest(res.data.tests[0].labTestId || res.data.tests[0].rawName);
+            if (res.data.tests.length > 1) {
+              setCompareTest(res.data.tests[1].labTestId || res.data.tests[1].rawName);
+            }
           }
         }
       } catch (err) {
@@ -39,7 +49,7 @@ export function AnalyticsPage() {
     loadTests();
   }, []);
 
-  // Fetch trend series when selected test changes
+  // Fetch primary trend series
   useEffect(() => {
     if (!selectedTest) return;
 
@@ -62,119 +72,278 @@ export function AnalyticsPage() {
     loadTrend();
   }, [selectedTest, onlyVerified]);
 
-  const stats = trendData?.statistics;
-  const series = trendData?.series || [];
+  // Fetch comparison trend series
+  useEffect(() => {
+    if (!enableCompare || !compareTest) {
+      setCompareTrendData(null);
+      return;
+    }
 
-  // Determine reference range bounds if available in source
-  const refLow = series[0]?.refLow;
-  const refHigh = series[0]?.refHigh;
+    async function loadCompareTrend() {
+      try {
+        const query = onlyVerified ? '?onlyVerified=true' : '';
+        const res = await api.get(`/api/v1/analytics/lab-trends/${encodeURIComponent(compareTest)}${query}`);
+        if (res.success && res.data?.trend) {
+          setCompareTrendData(res.data.trend);
+        }
+      } catch (err) {
+        console.error('Failed to load comparison trend:', err);
+      }
+    }
+    loadCompareTrend();
+  }, [enableCompare, compareTest, onlyVerified]);
+
+  const stats = trendData?.statistics;
+  const primarySeries = trendData?.series || [];
+
+  // Merge series if comparing
+  const chartSeries = primarySeries.map((item, idx) => {
+    const primaryNum = Number(item.numericValue ?? item.normalizedValue ?? parseFloat(item.rawValue) ?? 0);
+    const entry = {
+      testDate: item.testDate,
+      value: primaryNum,
+      rawValue: item.rawValue,
+      referenceRange: item.referenceRangeRaw
+    };
+
+    if (enableCompare && compareTrendData?.series?.[idx]) {
+      const compItem = compareTrendData.series[idx];
+      const compNum = Number(compItem.numericValue ?? compItem.normalizedValue ?? parseFloat(compItem.rawValue) ?? 0);
+      entry.compareValue = compNum;
+    }
+    return entry;
+  });
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Laboratory Trend Analytics</h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-            Deterministic longitudinal analysis with unit-compatibility enforcement
-          </p>
+      {/* Header Deck */}
+      <div style={{
+        backgroundColor: '#FFFFFF',
+        border: '1px solid var(--hairline)',
+        borderRadius: 'var(--radius-card)',
+        padding: '1.75rem 2rem',
+        marginBottom: '2rem',
+        boxShadow: 'var(--shadow-press)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.5rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
+              <span className="specimen-tag" style={{ backgroundColor: '#F0FDF4', color: '#166534', borderColor: '#BBF7D0' }}>
+                <span className="live-indicator" style={{ backgroundColor: '#16A34A' }} />
+                {lang === 'hi' ? 'स्वास्थ्य ग्राफ व ट्रैकिंग' : 'LONGITUDINAL BIOMARKER TRAJECTORIES'}
+              </span>
+              <span className="status-pill status-pill-neutral">
+                {lang === 'hi' ? 'यूनिट नॉर्मलाइज्ड' : 'UNIT-NORMALIZED'}
+              </span>
+            </div>
+
+            <h1 style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: '1.875rem',
+              fontWeight: 700,
+              letterSpacing: '-0.03em',
+              color: 'var(--ink-primary)',
+              lineHeight: 1.15
+            }}>
+              {t.analyticsTitle || 'Biomarker Trends & Trajectories'}
+            </h1>
+
+            <p style={{ fontSize: '0.875rem', color: 'var(--ink-secondary)', marginTop: '0.35rem', maxWidth: '680px' }}>
+              {t.analyticsSubtitle || 'Compare your blood test results across multiple years to see if values are improving.'}
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ minWidth: '220px' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4B5563', marginBottom: '0.25rem' }}>
+                {t.selectBiomarker || 'Select Lab Test:'}
+              </label>
+              <select
+                className="form-input"
+                style={{ fontWeight: 600, fontSize: '0.85rem' }}
+                value={selectedTest}
+                onChange={(e) => setSelectedTest(e.target.value)}
+              >
+                {availableTests.map((tItem, idx) => (
+                  <option key={idx} value={tItem.labTestId || tItem.rawName}>
+                    {tItem.displayName} ({tItem.unit})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Dictionary Trigger */}
+            <div style={{ paddingTop: '1.25rem' }}>
+              <button
+                type="button"
+                onClick={() => setDictionaryBiomarker(trendData?.testName || selectedTest)}
+                className="btn btn-secondary"
+                style={{ fontSize: '0.825rem' }}
+              >
+                📖 {t.learnMore || 'Learn About Test'}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="card" style={{ marginBottom: '1.5rem', padding: '1rem' }}>
-        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '220px' }}>
-            <label className="form-label">Select Laboratory Measurement</label>
-            <select
-              className="form-input"
-              value={selectedTest}
-              onChange={(e) => setSelectedTest(e.target.value)}
-            >
-              {availableTests.map((t, idx) => (
-                <option key={idx} value={t.labTestId || t.rawName}>
-                  {t.displayName} ({t.unit})
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Comparison and Filter Bar */}
+        <div style={{
+          marginTop: '1.5rem',
+          paddingTop: '1.25rem',
+          borderTop: '1px solid var(--hairline)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1.5rem',
+          flexWrap: 'wrap'
+        }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.825rem', fontWeight: 500 }}>
+            <input
+              type="checkbox"
+              checked={enableCompare}
+              onChange={(e) => setEnableCompare(e.target.checked)}
+            />
+            <span>{t.compareMode || 'Compare with second biomarker (e.g. HDL vs LDL)'}</span>
+          </label>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.5rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem' }}>
-              <input
-                type="checkbox"
-                checked={onlyVerified}
-                onChange={(e) => setOnlyVerified(e.target.checked)}
-              />
-              <span>Filter Verified Records Only</span>
-            </label>
-          </div>
+          {enableCompare && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>{lang === 'hi' ? 'दूसरा टेस्ट:' : 'Compare with:'}</span>
+              <select
+                className="form-input"
+                style={{ fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}
+                value={compareTest}
+                onChange={(e) => setCompareTest(e.target.value)}
+              >
+                {availableTests.filter(tItem => (tItem.labTestId || tItem.rawName) !== selectedTest).map((tItem, idx) => (
+                  <option key={idx} value={tItem.labTestId || tItem.rawName}>
+                    {tItem.displayName} ({tItem.unit})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.825rem', marginLeft: 'auto' }}>
+            <input
+              type="checkbox"
+              checked={onlyVerified}
+              onChange={(e) => setOnlyVerified(e.target.checked)}
+            />
+            <span>{lang === 'hi' ? 'केवल सत्यापित रिकॉर्ड' : 'Verified records only'}</span>
+          </label>
         </div>
       </div>
 
       {loading ? (
-        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading analytics data...</div>
+        <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--ink-muted)' }}>
+          <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📊</div>
+          <div>{lang === 'hi' ? 'ग्राफ डेटा लोड हो रहा है...' : 'Calibrating trajectory series...'}</div>
+        </div>
       ) : error ? (
         <div className="alert alert-warning">{error}</div>
-      ) : !trendData || series.length === 0 ? (
-        <div className="card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-          No historical measurements found for this test. Upload multiple reports over time to observe trajectories.
+      ) : !trendData || chartSeries.length === 0 ? (
+        <div className="clinical-card" style={{ padding: '3.5rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📈</div>
+          <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--ink-primary)' }}>
+            {lang === 'hi' ? 'कम से कम 2 रिपोर्ट अपलोड करें' : 'Insufficient Multi-Visit Data for Long-term Regression'}
+          </div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--ink-secondary)', maxWidth: '440px', margin: '0.5rem auto 0' }}>
+            {lang === 'hi'
+              ? 'ग्राफ और ट्रेंड देखने के लिए अपनी पिछली लैब रिपोर्ट्स अपलोड करें।'
+              : 'Ingest additional historical lab panels to populate multi-point regression lines and velocity indicators.'}
+          </p>
         </div>
       ) : (
         <>
-          {trendData.warning && (
-            <div className="alert alert-info">
-              <span>ℹ️</span>
-              <span>{trendData.warning}</span>
-            </div>
-          )}
-
-          {/* Stats Bar */}
-          <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
-            <div className="card" style={{ marginBottom: 0 }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>LATEST MEASUREMENT</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem' }}>
-                {stats?.latestValue} <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{trendData.unit}</span>
+          {/* Key Indicators */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+            <div className="clinical-card" style={{ marginBottom: 0, padding: '1.25rem' }}>
+              <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>
+                {t.latestReading || 'Latest Reading'}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginTop: '0.25rem' }}>
+                <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--ink-primary)' }}>
+                  {stats?.latestValue}
+                </span>
+                <span style={{ fontSize: '0.8rem', color: '#6B7280' }}>
+                  {trendData.unit}
+                </span>
               </div>
             </div>
 
-            <div className="card" style={{ marginBottom: 0 }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>BASELINE MEASUREMENT</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem' }}>
-                {stats?.baselineValue} <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{trendData.unit}</span>
+            <div className="clinical-card" style={{ marginBottom: 0, padding: '1.25rem' }}>
+              <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>
+                {t.baselineReading || 'Baseline Record'}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginTop: '0.25rem' }}>
+                <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--ink-primary)' }}>
+                  {stats?.baselineValue}
+                </span>
+                <span style={{ fontSize: '0.8rem', color: '#6B7280' }}>
+                  {trendData.unit}
+                </span>
               </div>
             </div>
 
-            <div className="card" style={{ marginBottom: 0 }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>NET CHANGE (DELTA)</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 700, color: stats?.delta > 0 ? 'var(--warning)' : 'var(--text-primary)', marginTop: '0.25rem' }}>
-                {stats?.delta !== null ? (stats.delta > 0 ? `+${stats.delta}` : stats.delta) : 'N/A'}
+            <div className="clinical-card" style={{ marginBottom: 0, padding: '1.25rem' }}>
+              <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>
+                {lang === 'hi' ? 'कुल अंतर (Change)' : 'Net Change (Δ)'}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginTop: '0.25rem' }}>
+                <span style={{
+                  fontSize: '1.75rem',
+                  fontWeight: 800,
+                  color: stats?.delta > 0 ? '#854D0E' : '#15803D'
+                }}>
+                  {stats?.delta !== null ? (stats.delta > 0 ? `+${stats.delta}` : stats.delta) : '0.0'}
+                </span>
+                <span style={{ fontSize: '0.8rem', color: '#6B7280' }}>
+                  {trendData.unit}
+                </span>
               </div>
             </div>
 
-            <div className="card" style={{ marginBottom: 0 }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>LONGITUDINAL DIRECTION</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: stats?.direction === 'INCREASING' ? 'var(--warning)' : 'var(--success)', marginTop: '0.5rem' }}>
-                {stats?.direction || 'STABLE'}
+            <div className="clinical-card" style={{ marginBottom: 0, padding: '1.25rem' }}>
+              <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>
+                {t.netTrajectory || 'Trend Direction'}
+              </div>
+              <div style={{ marginTop: '0.4rem' }}>
+                <span className={`status-pill ${stats?.direction === 'INCREASING' ? 'status-pill-elevated' : 'status-pill-normal'}`} style={{ fontSize: '0.85rem' }}>
+                  {stats?.direction === 'INCREASING'
+                    ? (lang === 'hi' ? '↑ बढ़ रहा है' : '↑ INCREASING')
+                    : stats?.direction === 'DECREASING'
+                    ? (lang === 'hi' ? '↓ घट रहा है' : '↓ DECREASING')
+                    : (lang === 'hi' ? '→ स्थिर है' : '→ STABLE')}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Interactive Chart */}
-          <div className="card">
-            <div className="card-header">
-              <h2 className="card-title">{trendData.testName} Longitudinal Trajectory</h2>
-              <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                Units: {trendData.unit} • Enforced Unit Consistency
-              </span>
+          {/* Interactive Chart Canvas */}
+          <div className="clinical-card">
+            <div className="clinical-card-header">
+              <div>
+                <div className="clinical-card-title">
+                  {trendData.testName} {enableCompare && compareTrendData ? `vs ${compareTrendData.testName}` : (lang === 'hi' ? 'स्वास्थ्य वक्र' : 'Longitudinal Curve')}
+                </div>
+                <div className="clinical-card-caption">
+                  {lang === 'hi' ? `माप: ${trendData.unit} · समय के साथ बदलाव` : `Calibrated in ${trendData.unit} across visits`}
+                </div>
+              </div>
             </div>
 
-            <div style={{ height: '360px', width: '100%', marginTop: '1rem' }}>
+            <div style={{ height: '380px', width: '100%', marginTop: '1rem' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={series} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="testDate" stroke="#64748b" tick={{ fontSize: 12 }} />
+                <LineChart data={chartSeries} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis
+                    dataKey="testDate"
+                    stroke="#6B7280"
+                    tick={{ fontSize: 11 }}
+                  />
                   <YAxis
-                    stroke="#64748b"
-                    tick={{ fontSize: 12 }}
+                    stroke="#6B7280"
+                    tick={{ fontSize: 11 }}
                     domain={['auto', 'auto']}
                     unit={` ${trendData.unit}`}
                   />
@@ -183,83 +352,70 @@ export function AnalyticsPage() {
                       if (active && payload && payload.length) {
                         const d = payload[0].payload;
                         return (
-                          <div style={{ backgroundColor: 'white', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-md)', fontSize: '0.8125rem' }}>
-                            <div style={{ fontWeight: 600 }}>{d.testDate}</div>
-                            <div style={{ color: 'var(--primary)', fontWeight: 700, margin: '0.25rem 0' }}>
-                              Value: {d.numericValue} {d.unit}
+                          <div style={{
+                            backgroundColor: '#FFFFFF',
+                            padding: '0.85rem 1rem',
+                            border: '1px solid #CBD5E1',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 14px rgba(15, 23, 42, 0.1)'
+                          }}>
+                            <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#64748B', marginBottom: '0.35rem' }}>
+                              📅 {d.testDate}
                             </div>
-                            <div>Ref Range: {d.referenceRangeRaw || 'N/A'}</div>
-                            <div>Flag: {d.isAbnormalFlag ? 'ABNORMAL' : 'NORMAL'}</div>
-                            <div style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                              Source: {d.source.filename} (Pg {d.source.pageNumber})
+                            <div style={{ color: '#0D9488', fontWeight: 800, fontSize: '1rem' }}>
+                              {trendData.testName}: {payload[0].value} {trendData.unit}
                             </div>
+                            {enableCompare && payload[1] && (
+                              <div style={{ color: '#0284C7', fontWeight: 800, fontSize: '1rem', marginTop: '0.25rem' }}>
+                                {compareTrendData?.testName}: {payload[1].value} {compareTrendData?.unit}
+                              </div>
+                            )}
+                            {d.referenceRange && (
+                              <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '0.4rem', borderTop: '1px solid #F1F5F9', paddingTop: '0.35rem' }}>
+                                Safe Range: [{d.referenceRange}]
+                              </div>
+                            )}
                           </div>
                         );
                       }
                       return null;
                     }}
                   />
-                  {refLow !== null && refHigh !== null && (
-                    <ReferenceArea y1={refLow} y2={refHigh} fill="#e0f2fe" fillOpacity={0.4} />
-                  )}
+                  <Legend />
                   <Line
                     type="monotone"
-                    dataKey="numericValue"
-                    stroke="#0284c7"
+                    dataKey="value"
+                    name={trendData.testName}
+                    stroke="#0D9488"
                     strokeWidth={3}
-                    dot={{ fill: '#0284c7', r: 6 }}
-                    activeDot={{ r: 8 }}
+                    dot={{ fill: '#0D9488', r: 5 }}
+                    activeDot={{ r: 8, stroke: '#FFFFFF', strokeWidth: 2 }}
                   />
+                  {enableCompare && compareTrendData && (
+                    <Line
+                      type="monotone"
+                      dataKey="compareValue"
+                      name={compareTrendData.testName}
+                      stroke="#0284C7"
+                      strokeWidth={3}
+                      strokeDasharray="4 4"
+                      dot={{ fill: '#0284C7', r: 5 }}
+                      activeDot={{ r: 8, stroke: '#FFFFFF', strokeWidth: 2 }}
+                    />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </div>
-
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '0.5rem' }}>
-              Shaded blue band indicates laboratory reference range ({refLow || 'N/A'} - {refHigh || 'N/A'} {trendData.unit}) when reported by source.
-            </div>
-          </div>
-
-          {/* Measurements Table */}
-          <div className="card">
-            <h2 className="card-title">Recorded Data Points</h2>
-            <div className="table-container" style={{ marginTop: '1rem' }}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Value</th>
-                    <th>Reference Range</th>
-                    <th>Flag</th>
-                    <th>Source Document</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {series.map((pt) => (
-                    <tr key={pt.id}>
-                      <td>{pt.testDate}</td>
-                      <td style={{ fontWeight: 600 }}>{pt.rawValue} {pt.unit}</td>
-                      <td>{pt.referenceRangeRaw || 'None'}</td>
-                      <td>
-                        {pt.isAbnormalFlag ? (
-                          <span className="badge badge-warning">ABNORMAL</span>
-                        ) : (
-                          <span className="badge badge-neutral">NORMAL</span>
-                        )}
-                      </td>
-                      <td>
-                        {pt.source.filename} (Pg {pt.source.pageNumber})
-                      </td>
-                      <td>
-                        <span className="badge badge-info">{pt.verificationStatus}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
         </>
+      )}
+
+      {/* Dictionary Modal for direct in-place explanation */}
+      {dictionaryBiomarker && (
+        <BiomarkerDictionaryModal
+          initialBiomarker={dictionaryBiomarker}
+          onClose={() => setDictionaryBiomarker(null)}
+        />
       )}
     </div>
   );
