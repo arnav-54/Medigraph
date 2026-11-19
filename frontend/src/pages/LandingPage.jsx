@@ -1,179 +1,196 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Activity,
+  ArrowRight,
+  TrendingUp,
+  MessageSquare,
+  ShieldCheck,
+  Globe,
+  UploadCloud,
+  FileCheck,
+  ChevronDown,
+  CheckCircle2,
+  AlertTriangle,
+  Lock,
+  Layers
+} from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { LanguageSelectorModal } from '../components/LanguageSelectorModal.jsx';
+import { Button, Badge } from '../components/ui/index.js';
 
 export function LandingPage() {
   const { lang, t, languages } = useLanguage();
   const [langModalOpen, setLangModalOpen] = useState(false);
-  const currentLangObj = languages.find(l => l.code === lang) || { native: 'English', name: 'English' };
+  const currentLangObj = languages.find((l) => l.code === lang) || { native: 'English', name: 'English' };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#F8FAFC', color: '#0F172A', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-canvas)', color: 'var(--ink-primary)', display: 'flex', flexDirection: 'column' }}>
       <LanguageSelectorModal
         isOpen={langModalOpen}
         onClose={() => setLangModalOpen(false)}
       />
 
-      {/* Header */}
-      <header style={{
-        borderBottom: '1px solid #E2E8F0',
-        backgroundColor: '#FFFFFF',
-        padding: '1.25rem 2.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        position: 'sticky',
-        top: 0,
-        zIndex: 20
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div style={{
-            width: '38px',
-            height: '38px',
-            backgroundColor: '#0D9488',
-            color: '#FFFFFF',
-            borderRadius: '8px',
-            fontWeight: 800,
-            fontSize: '1.1rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(13, 148, 136, 0.25)'
-          }}>
-            MG
+      {/* Navigation Header */}
+      <header
+        style={{
+          borderBottom: '1px solid var(--border-subtle)',
+          backgroundColor: 'var(--bg-surface)',
+          padding: '0.875rem 2rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 30
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: 'var(--color-accent)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#FFFFFF'
+            }}
+          >
+            <Activity size={18} strokeWidth={2.2} />
           </div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: '1.25rem', letterSpacing: '-0.02em', color: '#0F172A' }}>
-              MediGraph AI
-            </div>
-            <div style={{ fontSize: '0.8rem', color: '#64748B' }}>
-              {t.brandTagline || 'Personal Health Intelligence & Report Tracker'}
-            </div>
+            <span
+              style={{
+                fontWeight: 'var(--weight-semibold)',
+                fontSize: 'var(--text-base)',
+                letterSpacing: '-0.02em',
+                color: 'var(--ink-primary)'
+              }}
+            >
+              MediVault
+            </span>
+            <span
+              style={{
+                fontSize: 'var(--text-xs)',
+                color: 'var(--ink-muted)',
+                marginLeft: 'var(--space-2)',
+                display: 'none',
+                verticalAlign: 'middle'
+              }}
+              className="brand-subtitle"
+            >
+              Clinical Records
+            </span>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
           {/* Multi-language Selector */}
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={Globe}
             onClick={() => setLangModalOpen(true)}
-            className="btn btn-secondary btn-sm"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              fontWeight: 700,
-              backgroundColor: '#F8FAFC',
-              borderColor: '#CBD5E1',
-              color: '#0F172A'
-            }}
             title="Select Language / भाषा चुनें"
           >
-            <span>🌐</span>
             <span>{currentLangObj.native}</span>
-            <span style={{ fontSize: '0.7rem', color: '#64748B' }}>▼</span>
-          </button>
+            <ChevronDown size={14} style={{ opacity: 0.6 }} />
+          </Button>
 
-          <Link to="/login" className="btn btn-secondary btn-sm" style={{ fontWeight: 600 }}>
-            {t.signInBtn || 'Sign In'}
+          <Link to="/login" style={{ textDecoration: 'none' }}>
+            <Button variant="secondary" size="sm">
+              {t.signInBtn || 'Sign In'}
+            </Button>
           </Link>
-          <Link
-            to="/login"
-            className="btn btn-primary btn-sm"
-            style={{ fontWeight: 700, backgroundColor: '#0D9488', borderColor: '#0F766E' }}
-          >
-            {t.enterDemo || '⚡ Instant Demo'}
+
+          <Link to="/login" style={{ textDecoration: 'none' }}>
+            <Button variant="primary" size="sm" icon={ArrowRight}>
+              {t.enterDemo || 'Explore Demo'}
+            </Button>
           </Link>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main style={{ flex: 1, maxWidth: '1280px', margin: '0 auto', padding: '3.5rem 2rem', width: '100%' }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-          gap: '3.5rem',
-          alignItems: 'center',
-          marginBottom: '4rem'
-        }}>
+      {/* Main Content */}
+      <main style={{ flex: 1, maxWidth: '1180px', margin: '0 auto', padding: 'var(--space-12) var(--space-6)', width: '100%' }}>
+        {/* Hero Section */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: 'var(--space-10)',
+            alignItems: 'center',
+            marginBottom: 'var(--space-16)'
+          }}
+        >
+          {/* Left Column: Calm Value Proposition */}
           <div>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              color: '#0F766E',
-              backgroundColor: '#F0FDFA',
-              border: '1px solid #99F6E4',
-              padding: '0.4rem 0.95rem',
-              borderRadius: '9999px',
-              marginBottom: '1.5rem'
-            }}>
-              <span className="live-indicator" /> SMART LAB REPORT INTELLIGENCE
+            <div style={{ marginBottom: 'var(--space-4)' }}>
+              <Badge variant="accent" icon={ShieldCheck}>
+                Longitudinal Health Ledger
+              </Badge>
             </div>
 
-            <h1 style={{
-              fontSize: 'clamp(2rem, 4vw, 3.25rem)',
-              fontWeight: 800,
-              lineHeight: 1.2,
-              letterSpacing: '-0.03em',
-              color: '#0F172A',
-              marginBottom: '1.25rem'
-            }}>
-              Your Medical History, Decoded & Tracked in Simple Words.
+            <h1
+              style={{
+                fontSize: 'clamp(2.1rem, 3.8vw, 3.1rem)',
+                fontWeight: 'var(--weight-semibold)',
+                lineHeight: 1.15,
+                letterSpacing: '-0.035em',
+                color: 'var(--ink-primary)',
+                margin: 0,
+                marginBottom: 'var(--space-4)'
+              }}
+            >
+              Medical history is not a stack of unread PDFs. It is a continuous physiological ledger.
             </h1>
 
-            <p style={{
-              fontSize: '1.1rem',
-              color: '#334155',
-              lineHeight: 1.7,
-              marginBottom: '2rem',
-              maxWidth: '540px'
-            }}>
-              Never lose track of your health. Upload blood tests, thyroid checks, and doctor reports from any Indian lab. MediGraph automatically extracts your values, explains what they mean, and graphs your improvements over time.
+            <p
+              style={{
+                fontSize: 'var(--text-base)',
+                color: 'var(--ink-secondary)',
+                lineHeight: 1.65,
+                margin: 0,
+                marginBottom: 'var(--space-6)',
+                maxWidth: '520px'
+              }}
+            >
+              Upload laboratory reports from any diagnostic provider. MediVault extracts clinical biomarkers, standardizes measurement units across years, maps physiological trajectories, and equips you with a grounded assistant for doctor visits.
             </p>
 
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <Link
-                to="/login"
-                className="btn btn-primary"
-                style={{
-                  padding: '0.85rem 1.85rem',
-                  fontSize: '1rem',
-                  backgroundColor: '#0D9488',
-                  borderColor: '#0F766E'
-                }}
-              >
-                {t.enterDemo || '⚡ Explore Demo (Jane Doe)'}
+            <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
+              <Link to="/login" style={{ textDecoration: 'none' }}>
+                <Button variant="primary" size="lg" icon={ArrowRight}>
+                  {t.enterDemo || 'Open Patient Workspace'}
+                </Button>
               </Link>
-              <Link
-                to="/login"
-                className="btn btn-secondary"
-                style={{ padding: '0.85rem 1.5rem', fontSize: '1rem', fontWeight: 600 }}
-              >
-                {t.uploadButton || 'Upload Your Report →'}
+              <Link to="/login" style={{ textDecoration: 'none' }}>
+                <Button variant="secondary" size="lg" icon={UploadCloud}>
+                  {t.uploadButton || 'Upload Laboratory PDF'}
+                </Button>
               </Link>
             </div>
 
-            {/* Supported Labs Badge */}
-            <div style={{ marginTop: '2.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600 }}>
-                Works with reports from:
+            {/* Supported Providers in calm monochrome */}
+            <div style={{ marginTop: 'var(--space-8)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Engineered for Indian Diagnostic Formats
               </span>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                {['Dr Lal PathLabs', 'Thyrocare', 'SRL Diagnostics', 'Apollo 24|7', 'Max Healthcare'].map((lab, i) => (
-                  <span key={i} style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #CBD5E1',
-                    padding: '0.25rem 0.65rem',
-                    borderRadius: '6px',
-                    color: '#334155'
-                  }}>
+              <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                {['Dr Lal PathLabs', 'Thyrocare', 'SRL Diagnostics', 'Apollo 24|7', 'Max Healthcare', 'Metropolis'].map((lab) => (
+                  <span
+                    key={lab}
+                    style={{
+                      fontSize: 'var(--text-xs)',
+                      color: 'var(--ink-secondary)',
+                      backgroundColor: 'var(--bg-surface)',
+                      border: '1px solid var(--border-subtle)',
+                      padding: '2px 8px',
+                      borderRadius: 'var(--radius-sm)'
+                    }}
+                  >
                     {lab}
                   </span>
                 ))}
@@ -181,130 +198,290 @@ export function LandingPage() {
             </div>
           </div>
 
-          {/* Interactive Specimen Preview Card */}
-          <div className="card" style={{
-            padding: '2rem',
-            borderRadius: '16px',
-            boxShadow: '0 20px 40px -15px rgba(15, 23, 42, 0.1)',
-            border: '1px solid #E2E8F0',
-            backgroundColor: '#FFFFFF'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+          {/* Right Column: Specimen Clinical Record Preview */}
+          <div
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-lg)',
+              padding: 'var(--space-6)',
+              boxShadow: 'var(--shadow-sm)'
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingBottom: 'var(--space-4)',
+                borderBottom: '1px solid var(--border-subtle)',
+                marginBottom: 'var(--space-4)'
+              }}
+            >
               <div>
-                <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0F172A' }}>
-                  Metropolitan Health Checkup
+                <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-semibold)', color: 'var(--ink-primary)' }}>
+                  Metropolitan Health Panel
                 </div>
-                <div style={{ fontSize: '0.8rem', color: '#64748B' }}>
-                  Patient: Jane Doe · 15 Nov 2026
+                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>
+                  Specimen ID: LAB-2026-9481 · 15 Nov 2026
                 </div>
               </div>
-              <span className="status-pill status-pill-normal">
-                ✓ Verified
-              </span>
+              <Badge variant="normal" icon={CheckCircle2}>
+                Verified Extraction
+              </Badge>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
               {[
-                { name: 'Hemoglobin', val: '14.2 g/dL', range: '12.0 - 16.0', status: 'normal', label: '✓ Normal' },
-                { name: 'Fasting Blood Glucose', val: '118 mg/dL', range: '70 - 99', status: 'elevated', label: '⚠️ Elevated' },
-                { name: 'HbA1c (3-Month Sugar)', val: '5.9 %', range: '4.0 - 5.6', status: 'elevated', label: '⚠️ Elevated' },
-                { name: 'Serum Creatinine (Kidney)', val: '0.95 mg/dL', range: '0.60 - 1.20', status: 'normal', label: '✓ Normal' },
-                { name: 'Total Cholesterol', val: '210 mg/dL', range: '< 200', status: 'elevated', label: '⚠️ Elevated' },
-              ].map((item, idx) => (
-                <div key={idx} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0.85rem 1rem',
-                  borderRadius: '8px',
-                  backgroundColor: item.status === 'elevated' ? '#FFFBEB' : '#F8FAFC',
-                  border: item.status === 'elevated' ? '1px solid #FDE68A' : '1px solid #E2E8F0'
-                }}>
+                { name: 'Hemoglobin', value: '14.2', unit: 'g/dL', range: '12.0 – 16.0', variant: 'normal', status: 'Normal' },
+                { name: 'Fasting Blood Glucose', value: '118', unit: 'mg/dL', range: '70 – 99', variant: 'borderline', status: 'Elevated' },
+                { name: 'HbA1c (Glycated Hemoglobin)', value: '5.9', unit: '%', range: '4.0 – 5.6', variant: 'borderline', status: 'Elevated' },
+                { name: 'Serum Creatinine', value: '0.95', unit: 'mg/dL', range: '0.60 – 1.20', variant: 'normal', status: 'Normal' },
+                { name: 'Total Cholesterol', value: '210', unit: 'mg/dL', range: '< 200', variant: 'abnormal', status: 'High' }
+              ].map((row) => (
+                <div
+                  key={row.name}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: 'var(--space-3) var(--space-4)',
+                    backgroundColor: 'var(--bg-canvas)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)'
+                  }}
+                >
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0F172A' }}>
-                      {item.name}
+                    <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)', color: 'var(--ink-primary)' }}>
+                      {row.name}
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>
-                      Safe Range: [{item.range}]
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)', marginTop: '2px' }}>
+                      Ref: {row.range} {row.unit}
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 800, fontSize: '1.05rem', color: item.status === 'elevated' ? '#92400E' : '#0F172A' }}>
-                      {item.val}
+
+                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                    <div>
+                      <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-semibold)', color: 'var(--ink-primary)', fontVariantNumeric: 'tabular-nums' }}>
+                        {row.value}
+                      </span>
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)', marginLeft: '3px' }}>
+                        {row.unit}
+                      </span>
                     </div>
-                    <span className={`status-pill status-pill-${item.status}`} style={{ fontSize: '0.72rem', marginTop: '4px' }}>
-                      {item.label}
-                    </span>
+                    <Badge variant={row.variant} size="sm">
+                      {row.status}
+                    </Badge>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.8rem', color: '#0D9488', fontWeight: 700 }}>
-                💡 23 Biomarkers Tracked Across 5 Years
+            <div
+              style={{
+                marginTop: 'var(--space-4)',
+                paddingTop: 'var(--space-3)',
+                borderTop: '1px solid var(--border-subtle)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-secondary)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+                <TrendingUp size={14} color="var(--color-accent)" /> 23 biomarkers tracked across 5 years
               </span>
-              <Link to="/login" style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0D9488' }}>
-                Open Trajectories →
+              <Link to="/login" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-accent)', textDecoration: 'none', fontWeight: 'var(--weight-medium)' }}>
+                View Trajectories →
               </Link>
             </div>
           </div>
         </div>
 
-        {/* Feature Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '1.75rem',
-          marginTop: '2rem'
-        }}>
-          <div className="card" style={{ padding: '1.75rem' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>📖</div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.4rem' }}>
-              Biomarker Dictionary
-            </h3>
-            <p style={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.6 }}>
-              Look up any medical test in 11 Indian languages. Learn what it tests, why doctors order it, normal safe ranges, and diet tips.
+        {/* Feature Pillars Grid */}
+        <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-12)' }}>
+          <div style={{ textAlign: 'center', marginBottom: 'var(--space-10)' }}>
+            <h2
+              style={{
+                fontSize: 'var(--text-2xl)',
+                fontWeight: 'var(--weight-semibold)',
+                letterSpacing: '-0.02em',
+                color: 'var(--ink-primary)',
+                margin: 0,
+                marginBottom: 'var(--space-2)'
+              }}
+            >
+              A calm, structured foundation for personal health
+            </h2>
+            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-secondary)', margin: 0 }}>
+              Precision medical parsing, multi-year trend normalization, and local-first data ownership.
             </p>
           </div>
 
-          <div className="card" style={{ padding: '1.75rem' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>📈</div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.4rem' }}>
-              Lifetime Health Curves
-            </h3>
-            <p style={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.6 }}>
-              Compare values across 1, 3, or 5 years. Standardized units make sure graphs accurately reflect your true biological trajectory.
-            </p>
-          </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: 'var(--space-6)'
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-lg)',
+                padding: 'var(--space-6)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--space-3)'
+              }}
+            >
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--bg-canvas)',
+                  border: '1px solid var(--border-subtle)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--ink-primary)'
+                }}
+              >
+                <TrendingUp size={18} />
+              </div>
+              <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-semibold)', margin: 0, color: 'var(--ink-primary)' }}>
+                Longitudinal Curves
+              </h3>
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-secondary)', lineHeight: 1.6, margin: 0 }}>
+                Automatic unit standardization ensures glucose, lipid profiles, and renal biomarkers are plotted accurately across 1, 3, or 5-year spans.
+              </p>
+            </div>
 
-          <div className="card" style={{ padding: '1.75rem' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🤖</div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.4rem' }}>
-              Grounded AI Assistant
-            </h3>
-            <p style={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.6 }}>
-              Ask questions in Hindi, English, Bengali, Tamil, or Telugu. Answers cite source document pages with zero hallucinations.
-            </p>
+            <div
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-lg)',
+                padding: 'var(--space-6)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--space-3)'
+              }}
+            >
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--bg-canvas)',
+                  border: '1px solid var(--border-subtle)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--ink-primary)'
+                }}
+              >
+                <MessageSquare size={18} />
+              </div>
+              <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-semibold)', margin: 0, color: 'var(--ink-primary)' }}>
+                Grounded Assistant
+              </h3>
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-secondary)', lineHeight: 1.6, margin: 0 }}>
+                Query your health record in plain natural language or 11 Indian languages. Every response provides optical citations to source report pages.
+              </p>
+            </div>
+
+            <div
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-lg)',
+                padding: 'var(--space-6)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--space-3)'
+              }}
+            >
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--bg-canvas)',
+                  border: '1px solid var(--border-subtle)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--ink-primary)'
+                }}
+              >
+                <Globe size={18} />
+              </div>
+              <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-semibold)', margin: 0, color: 'var(--ink-primary)' }}>
+                Biomarker Dictionary
+              </h3>
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-secondary)', lineHeight: 1.6, margin: 0 }}>
+                Understand what each clinical test means, why physicians evaluate it, and how lifestyle factors influence baseline physiological values.
+              </p>
+            </div>
+
+            <div
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-lg)',
+                padding: 'var(--space-6)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--space-3)'
+              }}
+            >
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--bg-canvas)',
+                  border: '1px solid var(--border-subtle)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--ink-primary)'
+                }}
+              >
+                <ShieldCheck size={18} />
+              </div>
+              <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-semibold)', margin: 0, color: 'var(--ink-primary)' }}>
+                Complete Sovereignty
+              </h3>
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-secondary)', lineHeight: 1.6, margin: 0 }}>
+                Strict tenant isolation. Export your entire medical record in structured JSON (GDPR Art. 20) or permanently erase files in a single click.
+              </p>
+            </div>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer style={{
-        backgroundColor: '#FFFFFF',
-        borderTop: '1px solid #E2E8F0',
-        padding: '2rem',
-        textAlign: 'center',
-        fontSize: '0.85rem',
-        color: '#64748B',
-        lineHeight: 1.6
-      }}>
-        <div>
-          <strong>MediGraph AI</strong> · Personal Health Document Intelligence Platform.
-        </div>
-        <div style={{ marginTop: '0.35rem' }}>
-          Disclaimer: This application is for educational and personal health organization purposes. It does not provide medical diagnoses or treatment recommendations. Always consult a qualified physician.
+      <footer
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          borderTop: '1px solid var(--border-subtle)',
+          padding: 'var(--space-8) var(--space-6)',
+          textAlign: 'center',
+          fontSize: 'var(--text-xs)',
+          color: 'var(--ink-muted)',
+          lineHeight: 1.6
+        }}
+      >
+        <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+          <div style={{ color: 'var(--ink-secondary)', fontWeight: 'var(--weight-medium)' }}>
+            MediVault · Longitudinal Health Intelligence Platform
+          </div>
+          <div>
+            Disclaimer: MediVault is an archival, tracking, and educational platform for personal health records. It does not provide medical diagnoses, treatment advice, or replace consultation with licensed medical practitioners.
+          </div>
         </div>
       </footer>
     </div>

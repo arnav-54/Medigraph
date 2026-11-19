@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { ClipboardList, Plus, FileText, Check, Save, Printer, Calendar, Shield } from 'lucide-react';
 import { api } from '../api/client.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge, SkeletonCard, EmptyState, Alert } from '../components/ui';
 
 export function SummariesPage() {
-  const { t, lang } = useLanguage();
+  const { lang, t } = useLanguage();
   const [summaries, setSummaries] = useState([]);
   const [selectedSummary, setSelectedSummary] = useState(null);
   const [editText, setEditText] = useState('');
@@ -11,6 +13,7 @@ export function SummariesPage() {
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [savedSuccess, setSavedSuccess] = useState(false);
 
   const fetchSummaries = async () => {
     try {
@@ -44,7 +47,7 @@ export function SummariesPage() {
         setEditText(res.data.summary.summaryText);
       }
     } catch (err) {
-      setError(err.message || 'Failed to synthesize summary. Please ensure at least one document is uploaded.');
+      setError(err.message || 'Failed to synthesize summary. Ensure at least one report is uploaded.');
     } finally {
       setGenerating(false);
     }
@@ -53,6 +56,7 @@ export function SummariesPage() {
   const handleSaveEdit = async () => {
     if (!selectedSummary) return;
     setSaving(true);
+    setSavedSuccess(false);
     try {
       const res = await api.patch(`/api/v1/summaries/${selectedSummary.id}`, {
         summaryText: editText
@@ -60,230 +64,165 @@ export function SummariesPage() {
       if (res.success && res.data?.summary) {
         setSelectedSummary(res.data.summary);
         fetchSummaries();
-        alert(lang === 'hi' ? 'सारांश सफलतापूर्वक सहेजा गया' : 'Health summary saved successfully');
+        setSavedSuccess(true);
+        setTimeout(() => setSavedSuccess(false), 3000);
       }
     } catch (err) {
-      alert(err.message || 'Failed to save summary corrections');
+      setError(err.message || 'Failed to save summary modifications');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Header Deck */}
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        border: '1px solid var(--hairline)',
-        borderRadius: 'var(--radius-card)',
-        padding: '1.75rem 2rem',
-        marginBottom: '2rem',
-        boxShadow: 'var(--shadow-press)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.5rem' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
-              <span className="specimen-tag" style={{ backgroundColor: '#F0FDF4', color: '#166534', borderColor: '#BBF7D0' }}>
-                <span className="live-indicator" style={{ backgroundColor: '#16A34A' }} />
-                {lang === 'hi' ? 'डॉक्टर सारांश रिपोर्ट' : 'DOCTOR-READY HEALTH BRIEFING'}
-              </span>
-            </div>
-
-            <h1 style={{
-              fontFamily: 'var(--font-sans)',
-              fontSize: '1.875rem',
-              fontWeight: 700,
-              letterSpacing: '-0.03em',
-              color: 'var(--ink-primary)',
-              lineHeight: 1.15
-            }}>
-              {t.summariesTitle || 'Doctor-Ready Health Summaries'}
-            </h1>
-
-            <p style={{ fontSize: '0.875rem', color: 'var(--ink-secondary)', marginTop: '0.35rem', maxWidth: '680px' }}>
-              {t.summariesSubtitle || 'Plain-language medical summary across all your tests to show your physician or family.'}
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button
-              onClick={handleGenerate}
-              disabled={generating}
-              className="btn btn-primary"
-              style={{ backgroundColor: '#0F5132', borderColor: '#0B3D26' }}
-            >
-              {generating
-                ? (lang === 'hi' ? 'सारांश तैयार हो रहा है...' : 'Synthesizing Summary...')
-                : (t.generateSummary || '+ Generate New Health Summary')}
-            </button>
-          </div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <h1 style={{ fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+            Doctor-Ready Health Briefings
+          </h1>
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-muted)', marginTop: '2px' }}>
+            Multi-document medical synthesis in plain language formatted for family physicians and clinical visits.
+          </p>
         </div>
+
+        <Button
+          variant="primary"
+          size="sm"
+          icon={Plus}
+          loading={generating}
+          onClick={handleGenerate}
+        >
+          Generate New Briefing
+        </Button>
       </div>
 
       {error && (
-        <div className="alert alert-warning" style={{ marginBottom: '1.5rem' }}>
-          <span>⚠️</span>
-          <span>{error}</span>
-        </div>
+        <Alert variant="critical" onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {savedSuccess && (
+        <Alert variant="success" onClose={() => setSavedSuccess(false)}>
+          Health briefing updated and saved to vault.
+        </Alert>
       )}
 
       {/* Split Deck Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '1.75rem', alignItems: 'flex-start' }}>
-        {/* Left Column: Monograph Index */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{
-            padding: '1rem 1.25rem',
-            borderBottom: '1px solid var(--hairline)',
-            backgroundColor: '#FAFBF8',
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            color: '#4B5563',
-            textTransform: 'uppercase'
-          }}>
-            {lang === 'hi' ? `तैयार किए गए सारांश (${summaries.length})` : `SAVED SUMMARIES (${summaries.length})`}
-          </div>
-
-          <div style={{ padding: '0.75rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 300px) 1fr', gap: '16px', alignItems: 'flex-start' }}>
+        {/* Left Column: Index of Summaries */}
+        <Card>
+          <CardHeader>
+            <CardTitle as="h3">Saved Briefings ({summaries.length})</CardTitle>
+          </CardHeader>
+          <CardContent style={{ padding: '8px' }}>
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--ink-muted)', fontSize: '0.8rem' }}>
-                {lang === 'hi' ? 'लोड हो रहा है...' : 'Loading summaries...'}
+              <div style={{ padding: '12px' }}>
+                <Skeleton width="100%" height="40px" />
+                <Skeleton width="100%" height="40px" style={{ marginTop: '8px' }} />
               </div>
             ) : summaries.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--ink-muted)' }}>
-                <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📄</div>
-                <p style={{ fontSize: '0.825rem', color: 'var(--ink-secondary)', marginBottom: '1rem' }}>
-                  {t.noSummariesYet || 'No summaries generated yet. Click "+ Generate New Health Summary" to synthesize your records.'}
-                </p>
-                <button
-                  onClick={handleGenerate}
-                  disabled={generating}
-                  className="btn btn-primary btn-sm"
-                  style={{ width: '100%', backgroundColor: '#0F5132' }}
-                >
-                  {lang === 'hi' ? 'सारांश बनाएं' : 'Generate Now'}
-                </button>
+              <div style={{ padding: '24px', textAlign: 'center', fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>
+                No briefings generated yet.
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {summaries.map(s => {
-                  const isSelected = s.id === selectedSummary?.id;
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {summaries.map((s) => {
+                  const isSelected = selectedSummary?.id === s.id;
                   return (
-                    <div
+                    <button
                       key={s.id}
-                      onClick={() => {
-                        setSelectedSummary(s);
-                        setEditText(s.summaryText);
-                      }}
+                      type="button"
+                      onClick={() => { setSelectedSummary(s); setEditText(s.summaryText); }}
                       style={{
-                        padding: '0.85rem',
-                        borderRadius: '6px',
-                        backgroundColor: isSelected ? '#F0FDF4' : '#FFFFFF',
-                        border: '1px solid',
-                        borderColor: isSelected ? '#BBF7D0' : 'var(--hairline)',
+                        padding: '10px 12px',
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: isSelected ? 'var(--surface-sub)' : 'transparent',
+                        border: isSelected ? '1px solid var(--border)' : '1px solid transparent',
+                        textAlign: 'left',
                         cursor: 'pointer',
-                        transition: 'all 0.12s ease'
+                        transition: 'all var(--transition-fast)'
                       }}
                     >
-                      <div style={{
-                        fontWeight: 700,
-                        fontSize: '0.875rem',
-                        color: isSelected ? '#0F5132' : 'var(--ink-primary)'
-                      }}>
-                        {s.title || (lang === 'hi' ? 'स्वास्थ्य सारांश रिपोर्ट' : 'Health Summary Briefing')}
+                      <div style={{ fontSize: 'var(--text-sm)', fontWeight: isSelected ? 600 : 500, color: 'var(--ink)' }}>
+                        {s.title}
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.35rem', fontSize: '0.72rem', color: '#6B7280' }}>
-                        <span>{new Date(s.createdAt).toLocaleDateString()}</span>
-                        {s.isUserEdited && (
-                          <span style={{ color: '#0F5132', fontWeight: 600 }}>{lang === 'hi' ? 'सुधारा हुआ' : 'EDITED'}</span>
-                        )}
+                      <div style={{ fontSize: 'var(--text-2xs)', color: 'var(--ink-muted)', marginTop: '2px' }}>
+                        {new Date(s.createdAt).toLocaleDateString()} · {s.documentsIncluded?.length || 0} reports
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Right Column: Monograph Document Editor */}
-        <div className="card" style={{ padding: '2rem' }}>
-          {selectedSummary ? (
+        {/* Right Column: Briefing Editor / Viewer */}
+        <Card>
+          <CardHeader>
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--hairline)', paddingBottom: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <div>
-                  <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: '1.35rem', fontWeight: 700, color: 'var(--ink-primary)' }}>
-                    {selectedSummary.title || (lang === 'hi' ? 'स्वास्थ्य सारांश' : 'Longitudinal Health Summary')}
-                  </h2>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', marginTop: '0.25rem' }}>
-                    {lang === 'hi' ? 'तैयार किया गया:' : 'Generated on'} {new Date(selectedSummary.createdAt).toLocaleString()}
-                  </div>
-                </div>
+              <CardTitle as="h3">{selectedSummary?.title || 'Clinical Health Briefing'}</CardTitle>
+              <CardDescription>
+                {selectedSummary ? `Generated ${new Date(selectedSummary.createdAt).toLocaleDateString()}` : 'Select or generate a briefing'}
+              </CardDescription>
+            </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    onClick={handleSaveEdit}
-                    className="btn btn-primary btn-sm"
-                    disabled={saving}
-                    style={{ backgroundColor: '#0F5132', borderColor: '#0B3D26' }}
-                  >
-                    {saving ? (lang === 'hi' ? 'सहेजा जा रहा है...' : 'Saving...') : (t.saveSummary || 'Save Corrections')}
-                  </button>
-                </div>
+            {selectedSummary && (
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Button variant="secondary" size="sm" icon={Printer} onClick={() => window.print()}>
+                  Print
+                </Button>
+                <Button variant="primary" size="sm" icon={Save} loading={saving} onClick={handleSaveEdit}>
+                  Save Notes
+                </Button>
               </div>
+            )}
+          </CardHeader>
 
-              <div style={{
-                backgroundColor: '#F8FAF9',
-                border: '1px solid #D5DFDA',
-                borderRadius: '6px',
-                padding: '0.85rem 1.25rem',
-                marginBottom: '1.5rem',
-                fontSize: '0.825rem',
-                color: '#374151',
-                lineHeight: 1.5
-              }}>
-                <strong>💡 {lang === 'hi' ? 'डॉक्टर के लिए निर्देश:' : 'Physician Briefing:'}</strong>{' '}
-                {t.summaryDisclaimer || 'This summary is generated from your verified reports to help you communicate with your physician.'}
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" style={{ fontWeight: 600, fontSize: '0.8rem' }}>
-                  {lang === 'hi' ? 'सारांश का विवरण (आप इसे एडिट कर सकते हैं):' : 'Summary Narrative (Editable):'}
-                </label>
-                <textarea
-                  className="form-textarea"
-                  style={{
-                    minHeight: '340px',
-                    fontSize: '0.9rem',
-                    lineHeight: 1.7,
-                    padding: '1rem',
-                    borderRadius: '6px',
-                    border: '1px solid #D1D5DB'
-                  }}
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
+          <CardContent>
+            {!selectedSummary ? (
+              <div style={{ padding: '48px 0' }}>
+                <EmptyState
+                  icon={ClipboardList}
+                  title="No Briefing Selected"
+                  description="Generate a multi-document synthesis to create a 1-page health briefing for your physician."
+                  action={
+                    <Button variant="primary" size="sm" icon={Plus} loading={generating} onClick={handleGenerate}>
+                      Generate Now
+                    </Button>
+                  }
                 />
               </div>
-            </div>
-          ) : (
-            <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--ink-muted)' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📋</div>
-              <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--ink-primary)', marginBottom: '0.35rem' }}>
-                {lang === 'hi' ? 'कोई सारांश नहीं चुना गया' : 'No Summary Selected'}
+            ) : (
+              <div>
+                <textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  style={{
+                    width: '100%',
+                    minHeight: '420px',
+                    padding: '16px',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 'var(--text-xs)',
+                    lineHeight: '1.6',
+                    color: 'var(--ink)',
+                    backgroundColor: 'var(--surface-sub)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)',
+                    resize: 'vertical'
+                  }}
+                />
+
+                <div style={{ marginTop: '12px', fontSize: 'var(--text-2xs)', color: 'var(--ink-faint)', fontStyle: 'italic' }}>
+                  Educational synthesis for doctor appointments. Does not substitute professional clinical diagnosis.
+                </div>
               </div>
-              <p style={{ fontSize: '0.85rem', color: 'var(--ink-secondary)', maxWidth: '420px', margin: '0 auto 1.5rem' }}>
-                {t.noSummariesYet || 'Select a summary on the left or generate a new one from your uploaded reports.'}
-              </p>
-              <button
-                onClick={handleGenerate}
-                disabled={generating}
-                className="btn btn-primary"
-                style={{ backgroundColor: '#0F5132' }}
-              >
-                {t.generateSummary || '+ Generate New Health Summary'}
-              </button>
-            </div>
-          )}
-        </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

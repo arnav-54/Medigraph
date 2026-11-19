@@ -1,10 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Activity,
+  FileUp,
+  LineChart,
+  Bot,
+  ClipboardList,
+  BookOpen,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus,
+  Calendar,
+  AlertTriangle,
+  ChevronRight,
+  FileText
+} from 'lucide-react';
 import { api } from '../api/client.js';
-import { StatusBadge } from '../components/StatusBadge.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { BiomarkerDictionaryModal } from '../components/BiomarkerDictionaryModal.jsx';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge, Skeleton, SkeletonCard, EmptyState, Alert } from '../components/ui';
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -41,28 +56,35 @@ export function DashboardPage() {
     setDictionaryOpen(true);
   };
 
-  // Detect any tests with elevated, low, or critical values
-  const abnormalTests = trends.filter(t => {
-    const val = t.statistics?.latestValue;
+  const abnormalTests = trends.filter(item => {
+    const val = item.latestValue;
     if (val === null || val === undefined) return false;
-    if (t.testName.includes('Cholesterol') && val > 200) return true;
-    if (t.testName.includes('Triglycerides') && val > 150) return true;
-    if (t.testName.includes('Glucose') && val > 100) return true;
-    if (t.testName.includes('SGPT') && val > 50) return true;
-    if (t.testName.includes('SGOT') && val > 40) return true;
-    if (t.testName.includes('Uric Acid') && val > 7.0) return true;
-    if (t.testName.includes('HbA1c') && val >= 5.7) return true;
-    if (t.testName.includes('Vitamin D') && val < 30) return true;
-    if (t.testName.includes('Vitamin B12') && val < 210) return true;
+    if (item.testName.includes('Cholesterol') && val > 200) return true;
+    if (item.testName.includes('Glucose') && val > 100) return true;
+    if (item.testName.includes('HbA1c') && val >= 5.7) return true;
+    if (item.testName.includes('SGPT') && val > 50) return true;
     return false;
   });
 
-  // Calculate simple Vitality Health Score (100 minus penalty for each abnormal test)
-  const healthScore = Math.max(68, 100 - (abnormalTests.length * 5));
+  const vitalityScore = Math.max(68, 100 - (abnormalTests.length * 6));
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <SkeletonCard rows={2} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+          <SkeletonCard rows={2} />
+          <SkeletonCard rows={2} />
+          <SkeletonCard rows={2} />
+          <SkeletonCard rows={2} />
+        </div>
+        <SkeletonCard rows={4} />
+      </div>
+    );
+  }
 
   return (
-    <div>
-      {/* Test Guide Modal */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <BiomarkerDictionaryModal
         isOpen={dictionaryOpen}
         onClose={() => setDictionaryOpen(false)}
@@ -70,371 +92,283 @@ export function DashboardPage() {
       />
 
       {/* Patient Dossier Masthead */}
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        border: '1px solid var(--hairline)',
-        borderRadius: 'var(--radius-card)',
-        padding: '1.75rem 2rem',
-        marginBottom: '1.75rem',
-        boxShadow: 'var(--shadow-press)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.5rem' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <span className="specimen-tag">
-                <span className="live-indicator" /> {t.patientDossier} · 1985-04-12
-              </span>
-              <span className="status-pill status-pill-normal">{t.verifiedRecord}</span>
-            </div>
-
-            <h1 style={{
-              fontFamily: 'var(--font-sans)',
-              fontSize: '1.85rem',
-              fontWeight: 700,
-              letterSpacing: '-0.03em',
-              color: 'var(--ink-primary)',
-              lineHeight: 1.2
-            }}>
-              {user?.fullName || 'Jane Doe'}
-            </h1>
-
-            <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.4rem', flexWrap: 'wrap', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--ink-secondary)' }}>
-              <span>AGE: <strong>41 Y</strong></span>
-              <span>•</span>
-              <span>SEX: <strong>FEMALE</strong></span>
-              <span>•</span>
-              <span>IDENTIFIER: <strong>{user?.id?.slice(0, 18) || 'usr-demo-patient'}</strong></span>
-              <span>•</span>
-              <span>REPORTS INGESTED: <strong>{documents.length}</strong></span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            {/* Quick Dictionary Button */}
-            <button
-              onClick={() => openDictionaryFor('')}
-              className="btn btn-secondary"
-              style={{ fontWeight: 600, fontSize: '0.85rem' }}
-            >
-              <span>📖</span> {lang === 'hi' ? 'टेस्ट डिक्शनरी' : 'Test Dictionary'}
-            </button>
-            <Link to="/upload" className="btn btn-primary" style={{ fontWeight: 600, fontSize: '0.85rem' }}>
-              <span>+</span> {t.upload}
-            </Link>
-            <Link to="/assistant" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>
-              <span>💬</span> {t.navAssistant}
-            </Link>
-            <Link to="/summaries" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>
-              <span>📄</span> {t.navSummaries}
-            </Link>
-          </div>
-        </div>
-
-        {/* Vitality Summary Bar */}
-        <div style={{
-          marginTop: '1.25rem',
-          paddingTop: '1.25rem',
-          borderTop: '1px solid var(--hairline)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '50%',
-              backgroundColor: healthScore >= 80 ? '#EDF7F1' : '#FEF9C3',
-              border: `2px solid ${healthScore >= 80 ? '#BBF7D0' : '#FDE047'}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 800,
-              fontFamily: 'var(--font-mono)',
-              fontSize: '1rem',
-              color: healthScore >= 80 ? '#14532D' : '#854D0E'
-            }}>
-              {healthScore}
-            </div>
+      <Card>
+        <CardContent style={{ padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--ink-primary)' }}>
-                {t.vitalityScore}: <span style={{ color: healthScore >= 80 ? '#15803D' : '#854D0E' }}>{healthScore >= 80 ? (lang === 'hi' ? 'संतोषजनक (Good Control)' : 'Good Stability') : (lang === 'hi' ? 'ध्यान देने योग्य (Attention Needed)' : 'Needs Monitoring')}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <Badge variant="accent" size="sm">Active Vault</Badge>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>ID: {user?.id?.slice(0, 16) || 'usr-patient'}</span>
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>
-                {t.vitalityDesc} · {abnormalTests.length} {lang === 'hi' ? 'पैरामीटर्स में ध्यान देने की जरूरत है' : 'readings outside standard reference ranges'}
+              <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                {user?.fullName || user?.email?.split('@')[0] || 'Patient Record'}
+              </h1>
+              <div style={{ display: 'flex', gap: '16px', marginTop: '6px', fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>
+                <span>Age: <strong>41 Y</strong></span>
+                <span>•</span>
+                <span>Sex: <strong>Female</strong></span>
+                <span>•</span>
+                <span>Reports Ingested: <strong>{documents.length}</strong></span>
               </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <Button variant="secondary" size="sm" icon={BookOpen} onClick={() => openDictionaryFor('')}>
+                Biomarker Guide
+              </Button>
+              <Link to="/upload">
+                <Button variant="primary" size="sm" icon={FileUp}>
+                  Upload Report
+                </Button>
+              </Link>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <span className="badge badge-neutral" style={{ fontSize: '0.72rem', padding: '0.3rem 0.6rem' }}>
-              🔬 {trends.length} {lang === 'hi' ? 'बायोमार्कर्स ट्रैक हो रहे हैं' : 'Tracked Biomarkers'}
-            </span>
-            <span className="badge badge-neutral" style={{ fontSize: '0.72rem', padding: '0.3rem 0.6rem' }}>
-              📅 {timelineEvents.length} {lang === 'hi' ? 'स्वास्थ्य माइलस्टोन्स' : 'Health Visits'}
-            </span>
-          </div>
-        </div>
-      </div>
+          {/* Vitality Index Bar */}
+          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: abnormalTests.length === 0 ? 'var(--status-normal-bg)' : 'var(--status-borderline-bg)',
+                border: `1px solid ${abnormalTests.length === 0 ? 'var(--status-normal-border)' : 'var(--status-borderline-border)'}`,
+                color: abnormalTests.length === 0 ? 'var(--status-normal-ink)' : 'var(--status-borderline-ink)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 600
+              }}>
+                {vitalityScore}
+              </div>
+              <div>
+                <div style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--ink)' }}>
+                  Vitality Stability Index: {abnormalTests.length === 0 ? 'Good Control' : 'Attention Suggested'}
+                </div>
+                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>
+                  {abnormalTests.length} parameter(s) outside optimal laboratory reference interval
+                </div>
+              </div>
+            </div>
 
-      {/* Critical / Elevated Alert Banner (If abnormal values exist) */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Badge variant="neutral" size="sm">{trends.length} Tracked Biomarkers</Badge>
+              <Badge variant="neutral" size="sm">{timelineEvents.length} Clinical Visits</Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Abnormal Values Banner if present */}
       {abnormalTests.length > 0 && (
-        <div style={{
-          backgroundColor: '#FFF7ED',
-          border: '1px solid #FFEDD5',
-          borderLeft: '4px solid #EA580C',
-          borderRadius: 'var(--radius-subtle)',
-          padding: '1.25rem 1.5rem',
-          marginBottom: '2rem',
-          boxShadow: 'var(--shadow-press)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem' }}>
-            <span style={{ fontSize: '1.35rem', marginTop: '1px' }}>⚠️</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#9A3412', marginBottom: '0.35rem' }}>
-                {t.criticalAlertTitle}
-              </div>
-              <p style={{ fontSize: '0.825rem', color: '#7C2D12', lineHeight: 1.5, marginBottom: '0.75rem' }}>
-                {t.criticalAlertMessage}
-              </p>
-
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {abnormalTests.map((tItem, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => openDictionaryFor(tItem.testName)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      padding: '0.35rem 0.75rem',
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #FED7AA',
-                      borderRadius: 'var(--radius-sharp)',
-                      fontSize: '0.785rem',
-                      fontWeight: 600,
-                      color: '#9A3412',
-                      cursor: 'pointer'
-                    }}
-                    title="Click to learn what this test means"
-                  >
-                    <span>{tItem.testName}:</span>
-                    <strong style={{ fontFamily: 'var(--font-mono)' }}>{tItem.statistics?.latestValue ?? tItem.latestValue} {tItem.unit}</strong>
-                    <span style={{ fontSize: '0.7rem', color: '#C2410C' }}>📖 Info →</span>
-                  </button>
-                ))}
-              </div>
+        <Alert
+          variant="warning"
+          title="Elevated Biomarkers Detected"
+          action={
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+              {abnormalTests.map((item, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => openDictionaryFor(item.testName)}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: 'var(--radius-xs)',
+                    backgroundColor: 'var(--surface)',
+                    border: '1px solid var(--status-borderline-border)',
+                    fontSize: 'var(--text-xs)',
+                    color: 'var(--status-borderline-ink)',
+                    cursor: 'pointer',
+                    fontWeight: 500
+                  }}
+                >
+                  {item.testName}: <strong>{item.latestValue} {item.unit}</strong> → Guide
+                </button>
+              ))}
             </div>
-          </div>
-        </div>
+          }
+        >
+          Certain observations exceed standard clinical ranges. Review trends with your physician.
+        </Alert>
       )}
 
-      {/* Key Health Indicators Grid */}
-      <div style={{ marginBottom: '2.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+      {/* Biomarker Status Matrix Cards */}
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
           <div>
-            <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink-primary)' }}>
-              {t.statusMatrixTitle}
+            <h2 style={{ fontSize: 'var(--text-md)', fontWeight: 600, color: 'var(--ink)' }}>
+              Physiological Status Matrix
             </h2>
-            <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>
-              {t.statusMatrixSubtitle} · {lang === 'hi' ? 'जानकारी के लिए किसी भी कार्ड पर क्लिक करें' : 'Click any card to learn why it matters'}
-            </div>
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)', marginTop: '2px' }}>
+              Unit-normalized latest measurements across primary diagnostic panels.
+            </p>
           </div>
-          <Link to="/analytics" className="btn btn-secondary btn-sm" style={{ fontWeight: 600 }}>
-            {t.viewAllTrends}
+          <Link to="/analytics" style={{ fontSize: 'var(--text-xs)', fontWeight: 500, color: 'var(--accent)' }}>
+            View all trajectories →
           </Link>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '1rem'
-        }}>
-          {trends.slice(0, 4).map((tItem, idx) => {
-            const val = tItem.statistics?.latestValue ?? tItem.latestValue;
-            const delta = tItem.statistics?.delta ?? tItem.delta;
-            const isElevated = delta > 0 && (tItem.testName.includes('Glucose') || tItem.testName.includes('Cholesterol') || tItem.testName.includes('SGPT'));
+        {trends.length === 0 ? (
+          <EmptyState
+            icon={Activity}
+            title="No biomarker measurements found"
+            description="Upload your first laboratory report PDF or photo to extract and graph your biomarkers."
+            action={
+              <Link to="/upload">
+                <Button variant="primary" size="sm" icon={FileUp}>Upload Report</Button>
+              </Link>
+            }
+          />
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
+            {trends.slice(0, 4).map((item, idx) => {
+              const delta = item.delta;
+              const isElevated = delta > 0 && (item.testName.includes('Glucose') || item.testName.includes('Cholesterol') || item.testName.includes('SGPT'));
+              const DeltaIcon = delta > 0 ? ArrowUpRight : delta < 0 ? ArrowDownRight : Minus;
 
-            return (
-              <div
-                key={idx}
-                onClick={() => openDictionaryFor(tItem.testName)}
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid var(--hairline)',
-                  borderRadius: 'var(--radius-subtle)',
-                  padding: '1.25rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  boxShadow: 'var(--shadow-press)',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--cobalt-border)'; e.currentTarget.style.boxShadow = 'var(--shadow-raised)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--hairline)'; e.currentTarget.style.boxShadow = 'var(--shadow-press)'; }}
-                title={lang === 'hi' ? 'इस टेस्ट की पूरी जानकारी और डाइट टिप्स देखें' : 'Click to learn definition, normal range and diet tips'}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.65rem' }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    {tItem.category || 'CLINICAL PANEL'}
-                  </div>
-                  <span className={`status-pill ${isElevated ? 'status-pill-elevated' : 'status-pill-normal'}`}>
-                    {isElevated ? t.elevated : t.normal}
-                  </span>
-                </div>
+              return (
+                <Card
+                  key={idx}
+                  hover
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => openDictionaryFor(item.testName)}
+                >
+                  <CardContent style={{ padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <span style={{ fontSize: 'var(--text-2xs)', fontWeight: 600, color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        {item.category || 'Clinical Panel'}
+                      </span>
+                      <Badge variant={isElevated ? 'borderline' : 'normal'} size="sm">
+                        {isElevated ? 'Elevated' : 'Normal'}
+                      </Badge>
+                    </div>
 
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--ink-primary)', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>{tItem.testName}</span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--cobalt)' }}>📖</span>
-                  </div>
+                    <div style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--ink)', marginBottom: '4px' }}>
+                      {item.testName}
+                    </div>
 
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginTop: '0.25rem' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.85rem', fontWeight: 800, color: 'var(--ink-primary)' }}>
-                      {val !== null && val !== undefined ? val : '—'}
-                    </span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--ink-muted)' }}>
-                      {tItem.unit}
-                    </span>
-                  </div>
-                </div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', margin: '8px 0 14px' }}>
+                      <span style={{ fontSize: 'var(--text-3xl)', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em', lineHeight: 1 }}>
+                        {item.latestValue !== null && item.latestValue !== undefined ? item.latestValue : '—'}
+                      </span>
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)', fontWeight: 500 }}>
+                        {item.unit}
+                      </span>
+                    </div>
 
-                <div style={{
-                  marginTop: '1rem',
-                  paddingTop: '0.75rem',
-                  borderTop: '1px solid var(--hairline)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.72rem'
-                }}>
-                  <span style={{ color: 'var(--ink-muted)' }}>{t.deltaVsBaseline}</span>
-                  <strong style={{ color: delta > 0 ? '#854D0E' : 'var(--ink-primary)' }}>
-                    {delta !== null && delta !== undefined ? (delta > 0 ? `+${delta}` : delta) : '0.0'} {tItem.unit}
-                  </strong>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid var(--border-subtle)', fontSize: 'var(--text-xs)' }}>
+                      <span style={{ color: 'var(--ink-muted)' }}>Delta vs baseline:</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontWeight: 600, color: isElevated ? 'var(--status-borderline-ink)' : 'var(--ink)' }}>
+                        <DeltaIcon size={12} />
+                        {delta !== null && delta !== undefined ? (delta > 0 ? `+${delta}` : delta) : '0.0'} {item.unit}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Split Section: Ingestion Ledger & Chronological Timeline */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.5rem' }}>
-        {/* Document Ingestion Ledger */}
-        <div className="card" style={{ padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+      {/* Ingestion History & Longitudinal Visits Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '16px' }}>
+        {/* Uploads Ledger */}
+        <Card>
+          <CardHeader>
             <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--ink-primary)' }}>
-                {t.recentReports}
-              </h3>
-              <p style={{ fontSize: '0.785rem', color: 'var(--ink-muted)' }}>
-                {lang === 'hi' ? 'सत्यापित और सुरक्षित मेडिकल रिपोर्ट्स' : 'Cryptographically verified PDF uploads'}
-              </p>
+              <CardTitle as="h3">Recent Reports Ingested</CardTitle>
+              <CardDescription>Verified cryptographic diagnostic uploads</CardDescription>
             </div>
-            <Link to="/documents" className="btn btn-secondary btn-sm">
-              {lang === 'hi' ? 'सभी देखें' : 'All Records'} ({documents.length})
+            <Link to="/documents">
+              <Button variant="ghost" size="sm">View all</Button>
             </Link>
-          </div>
-
-          {documents.length === 0 ? (
-            <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--ink-muted)' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📁</div>
-              <div>{lang === 'hi' ? 'अभी तक कोई रिपोर्ट अपलोड नहीं हुई।' : 'No reports ingested yet.'}</div>
-              <Link to="/upload" className="btn btn-primary btn-sm" style={{ marginTop: '0.75rem' }}>
-                {t.upload}
-              </Link>
-            </div>
-          ) : (
-            <div className="table-responsive">
-              <table className="clinical-table">
-                <thead>
-                  <tr>
-                    <th>{lang === 'hi' ? 'रिपोर्ट फ़ाइल' : 'Report Title'}</th>
-                    <th>{lang === 'hi' ? 'तारीख' : 'Upload Date'}</th>
-                    <th>{lang === 'hi' ? 'स्थिति' : 'Status'}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {documents.slice(0, 5).map((doc) => (
-                    <tr key={doc.id}>
-                      <td>
-                        <Link to={`/documents/${doc.id}`} style={{ fontWeight: 600, color: 'var(--ink-primary)', fontSize: '0.85rem' }}>
+          </CardHeader>
+          <CardContent style={{ padding: '0' }}>
+            {documents.length === 0 ? (
+              <div style={{ padding: '24px', textAlign: 'center', fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>
+                No diagnostic documents uploaded yet.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {documents.slice(0, 4).map((doc) => (
+                  <Link
+                    key={doc.id}
+                    to={`/documents/${doc.id}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 20px',
+                      borderBottom: '1px solid var(--border-subtle)',
+                      transition: 'background-color var(--transition-fast)'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--surface-hover)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <FileText size={16} style={{ color: 'var(--ink-muted)' }} />
+                      <div>
+                        <div style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--ink)' }}>
                           {doc.originalFilename}
-                        </Link>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)' }}>
-                          {(doc.fileSize / 1024).toFixed(1)} KB · {doc._count?.extractedRecords || 0} {lang === 'hi' ? 'टेस्ट' : 'markers'}
                         </div>
-                      </td>
-                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.785rem' }}>
-                        {new Date(doc.uploadedAt).toLocaleDateString()}
-                      </td>
-                      <td>
-                        <StatusBadge status={doc.processingStatus} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* Chronological Longitudinal Encounters */}
-        <div className="card" style={{ padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--ink-primary)' }}>
-                {t.recentTimeline}
-              </h3>
-              <p style={{ fontSize: '0.785rem', color: 'var(--ink-muted)' }}>
-                {lang === 'hi' ? 'तारीख-वार मेडिकल हिस्ट्री' : 'Sequential calendar history of visits'}
-              </p>
-            </div>
-            <Link to="/timeline" className="btn btn-secondary btn-sm">
-              {lang === 'hi' ? 'पूरी टाइमलाइन' : 'Full Index'} →
-            </Link>
-          </div>
-
-          {timelineEvents.length === 0 ? (
-            <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--ink-muted)' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📅</div>
-              <div>{lang === 'hi' ? 'कोई टाइमलाइन इवेंट नहीं मिला।' : 'No timeline events recorded yet.'}</div>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              {timelineEvents.slice(0, 4).map((evt) => (
-                <div
-                  key={evt.id}
-                  style={{
-                    padding: '0.85rem 1rem',
-                    backgroundColor: '#FAFBF8',
-                    border: '1px solid var(--hairline)',
-                    borderRadius: 'var(--radius-subtle)'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--ink-primary)' }}>
-                      {evt.title}
+                        <div style={{ fontSize: 'var(--text-2xs)', color: 'var(--ink-muted)' }}>
+                          {new Date(doc.uploadedAt).toLocaleDateString()} · {doc.extractedRecords?.length || 0} extracted items
+                        </div>
+                      </div>
                     </div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--ink-muted)' }}>
-                      {new Date(evt.eventDate).toLocaleDateString()}
-                    </span>
-                  </div>
-                  {evt.description && (
-                    <p style={{ fontSize: '0.785rem', color: 'var(--ink-secondary)', lineHeight: 1.45 }}>
+                    <Badge variant="normal" size="sm">Ready</Badge>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Timeline Encounters */}
+        <Card>
+          <CardHeader>
+            <div>
+              <CardTitle as="h3">Longitudinal Encounters</CardTitle>
+              <CardDescription>Chronological timeline of clinical visits</CardDescription>
+            </div>
+            <Link to="/timeline">
+              <Button variant="ghost" size="sm">Full index</Button>
+            </Link>
+          </CardHeader>
+          <CardContent style={{ padding: '0' }}>
+            {timelineEvents.length === 0 ? (
+              <div style={{ padding: '24px', textAlign: 'center', fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>
+                No clinical encounters logged yet.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {timelineEvents.slice(0, 4).map((evt) => (
+                  <div
+                    key={evt.id}
+                    style={{
+                      padding: '12px 20px',
+                      borderBottom: '1px solid var(--border-subtle)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                      <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--ink)' }}>
+                        {evt.title}
+                      </span>
+                      <span style={{ fontSize: 'var(--text-2xs)', color: 'var(--ink-muted)' }}>
+                        {new Date(evt.eventDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)', lineHeight: 'var(--leading-xs)' }}>
                       {evt.description}
                     </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

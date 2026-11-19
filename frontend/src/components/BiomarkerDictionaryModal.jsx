@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { Search, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Sparkles, AlertTriangle, Info } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
+import { Modal, Input, Badge, Button, EmptyState } from './ui';
 
 export const BIOMARKER_KNOWLEDGE = {
   HEMOGLOBIN: {
@@ -296,255 +298,178 @@ export function BiomarkerDictionaryModal({ isOpen, onClose, initialSearch = '' }
   });
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(18, 24, 36, 0.65)',
-      backdropFilter: 'blur(4px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999,
-      padding: '1.5rem'
-    }}>
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: 'var(--radius-card)',
-        maxWidth: '840px',
-        width: '100%',
-        maxHeight: '90vh',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '0 20px 45px rgba(0,0,0,0.2)',
-        border: '1px solid var(--hairline)',
-        overflow: 'hidden'
-      }}>
-        {/* Modal Header */}
-        <div style={{
-          padding: '1.25rem 1.75rem',
-          borderBottom: '1px solid var(--hairline)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          backgroundColor: '#FAFBF8'
-        }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.25rem' }}>📖</span>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--ink-primary)' }}>
-                {lang === 'hi' ? 'मेडिकल टेस्ट गाइड व डिक्शनरी' : 'Medical Test Guide & Biomarker Dictionary'}
-              </h2>
-            </div>
-            <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginTop: '0.2rem' }}>
-              {lang === 'hi' ? 'किसी भी टेस्ट के बारे में आसान भाषा में जानें — यह क्या है, क्यों होता है और क्या खाना चाहिए।' : 'Understand any lab test in simple plain language: why it is tested, healthy ranges, and dietary tips.'}
-            </p>
-          </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={lang === 'hi' ? 'मेडिकल टेस्ट गाइड व डिक्शनरी' : 'Clinical Biomarker Guide & Reference Dictionary'}
+      description={lang === 'hi' ? 'किसी भी टेस्ट के बारे में आसान भाषा में समझें — यह क्या है, सुरक्षित सीमा क्या है और क्या आहार लेना चाहिए।' : 'Physiological roles, standard clinical reference intervals, and nutritional recommendations in plain language.'}
+      maxWidth="820px"
+    >
+      {/* Search & Category Filter */}
+      <div style={{ marginBottom: '16px' }}>
+        <Input
+          icon={Search}
+          placeholder={lang === 'hi' ? 'टेस्ट का नाम खोजें (उदा. Hemoglobin, Sugar, Thyroid, Vitamin D)...' : 'Search biomarker name (e.g. Hemoglobin, Fasting Glucose, HbA1c, Thyroid)...'}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          autoFocus
+        />
 
-          <button
-            onClick={onClose}
-            className="btn btn-secondary btn-sm"
-            style={{ borderRadius: '50%', width: '32px', height: '32px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}
-          >
-            ✕
-          </button>
+        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', marginTop: '10px', paddingBottom: '4px' }}>
+          {categories.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setSelectedCategory(c)}
+              style={{
+                fontSize: 'var(--text-xs)',
+                padding: '4px 10px',
+                borderRadius: 'var(--radius-full)',
+                border: '1px solid',
+                borderColor: selectedCategory === c ? 'var(--accent)' : 'var(--border)',
+                backgroundColor: selectedCategory === c ? 'var(--accent-subtle)' : 'var(--surface)',
+                color: selectedCategory === c ? 'var(--accent-ink)' : 'var(--ink-secondary)',
+                fontWeight: selectedCategory === c ? 600 : 500,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all var(--transition-fast)'
+              }}
+            >
+              {c === 'ALL' ? (lang === 'hi' ? 'सभी टेस्ट' : 'All Biomarkers') : c}
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* Search Bar & Category Pills */}
-        <div style={{ padding: '1rem 1.75rem', borderBottom: '1px solid var(--hairline)', backgroundColor: '#FFFFFF' }}>
-          <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
-            <input
-              type="text"
-              className="form-input"
-              placeholder={lang === 'hi' ? 'टेस्ट का नाम खोजें (उदा. Hemoglobin, Sugar, Thyroid, Vitamin D, Creatinine)...' : 'Search test name (e.g. Hemoglobin, Sugar, Thyroid, Vitamin D, Creatinine)...'}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ paddingLeft: '2.25rem' }}
-              autoFocus
-            />
-            <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-muted)' }}>
-              🔍
-            </span>
-          </div>
-
-          {/* Quick Category Filters */}
-          <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
-            {categories.map((c) => (
-              <button
-                key={c}
-                onClick={() => setSelectedCategory(c)}
+      {/* List of Biomarkers */}
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={Search}
+          title="No matching biomarker found"
+          description="Try searching with a generic term like Hemoglobin, Glucose, Cholesterol, or Creatinine."
+        />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {filtered.map(([key, item]) => {
+            const isExpanded = activeItem === key;
+            return (
+              <div
+                key={key}
                 style={{
-                  fontSize: '0.72rem',
-                  fontFamily: 'var(--font-sans)',
-                  padding: '0.3rem 0.65rem',
-                  borderRadius: 'var(--radius-pill)',
                   border: '1px solid',
-                  borderColor: selectedCategory === c ? 'var(--cobalt)' : 'var(--hairline)',
-                  backgroundColor: selectedCategory === c ? 'var(--cobalt)' : '#FAFBF8',
-                  color: selectedCategory === c ? '#FFFFFF' : 'var(--ink-secondary)',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap'
+                  borderColor: isExpanded ? 'var(--accent-border)' : 'var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: isExpanded ? 'var(--surface-sub)' : 'var(--surface)',
+                  overflow: 'hidden',
+                  transition: 'all var(--transition-fast)'
                 }}
               >
-                {c === 'ALL' ? (lang === 'hi' ? 'सभी टेस्ट (All)' : 'All Tests') : c}
-              </button>
-            ))}
-          </div>
-        </div>
+                {/* Accordion Row */}
+                <div
+                  onClick={() => setActiveItem(isExpanded ? null : key)}
+                  style={{
+                    padding: '12px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    userSelect: 'none'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--ink)' }}>
+                      {item.name}
+                    </span>
+                    <Badge variant="neutral" size="sm">{item.category}</Badge>
+                  </div>
 
-        {/* Content Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.25rem 1.75rem' }}>
-          {filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--ink-muted)' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔍</div>
-              <div>{lang === 'hi' ? 'कोई परिणाम नहीं मिला। कृपया दूसरा टेस्ट नाम टाइप करें।' : 'No matching lab test found. Try searching another term.'}</div>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {filtered.map(([key, item]) => {
-                const isExpanded = activeItem === key;
-                return (
-                  <div
-                    key={key}
-                    style={{
-                      border: '1px solid',
-                      borderColor: isExpanded ? 'var(--cobalt-border)' : 'var(--hairline)',
-                      borderRadius: 'var(--radius-subtle)',
-                      backgroundColor: isExpanded ? '#FAFBF8' : '#FFFFFF',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    {/* Header Row */}
-                    <div
-                      onClick={() => setActiveItem(isExpanded ? null : key)}
-                      style={{
-                        padding: '1rem 1.25rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        userSelect: 'none'
-                      }}
-                    >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--ink-muted)' }}>
+                    <span style={{ fontSize: 'var(--text-xs)', fontWeight: 500 }}>
+                      {isExpanded ? 'Collapse' : 'Details'}
+                    </span>
+                    {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </div>
+                </div>
+
+                {/* Expanded Details */}
+                {isExpanded && (
+                  <div style={{ padding: '16px', borderTop: '1px solid var(--border)', backgroundColor: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {/* Plain Definition */}
+                    <p style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-secondary)', lineHeight: 'var(--leading-sm)' }}>
+                      {lang === 'hi' ? item.whatIsItHi : item.whatIsItEn}
+                    </p>
+
+                    {/* Reference Intervals */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '12px', backgroundColor: 'var(--status-normal-bg)', border: '1px solid var(--status-normal-border)', borderRadius: 'var(--radius-xs)' }}>
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                          <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--ink-primary)' }}>
-                            {item.name}
-                          </span>
-                          <span className="badge badge-neutral" style={{ fontSize: '0.68rem' }}>
-                            {item.category}
-                          </span>
-                        </div>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--ink-secondary)', marginTop: '0.2rem' }}>
-                          {lang === 'hi' ? item.whatIsItHi : item.whatIsItEn}
-                        </p>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--cobalt)', fontWeight: 600 }}>
-                          {isExpanded ? '▲ ' + (lang === 'hi' ? 'कम देखें' : 'Less') : '▼ ' + (lang === 'hi' ? 'पूरा विवरण' : 'Details')}
+                        <span style={{ fontSize: 'var(--text-2xs)', fontWeight: 600, color: 'var(--status-normal-ink)', textTransform: 'uppercase' }}>
+                          Men Safe Reference
                         </span>
+                        <div style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--status-normal-ink)', marginTop: '2px' }}>
+                          {item.normalRangeMale}
+                        </div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: 'var(--text-2xs)', fontWeight: 600, color: 'var(--status-normal-ink)', textTransform: 'uppercase' }}>
+                          Women Safe Reference
+                        </span>
+                        <div style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--status-normal-ink)', marginTop: '2px' }}>
+                          {item.normalRangeFemale}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Expanded Clinical Breakdown */}
-                    {isExpanded && (
-                      <div style={{
-                        padding: '1rem 1.25rem 1.25rem',
-                        borderTop: '1px solid var(--hairline)',
-                        backgroundColor: '#FFFFFF',
-                        fontSize: '0.825rem',
-                        lineHeight: 1.55
-                      }}>
-                        {/* Normal Safe Range */}
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                          gap: '0.75rem',
-                          backgroundColor: '#EDF7F1',
-                          border: '1px solid #BBF7D0',
-                          borderRadius: 'var(--radius-sharp)',
-                          padding: '0.75rem 1rem',
-                          marginBottom: '1rem'
-                        }}>
-                          <div>
-                            <span style={{ fontSize: '0.7rem', color: '#14532D', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>
-                              {lang === 'hi' ? 'पुरुष (Men) सुरक्षित सीमा:' : 'Normal Safe Range (Men):'}
-                            </span>
-                            <strong style={{ color: '#14532D', fontFamily: 'var(--font-mono)' }}>{item.normalRangeMale}</strong>
-                          </div>
-                          <div>
-                            <span style={{ fontSize: '0.7rem', color: '#14532D', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>
-                              {lang === 'hi' ? 'महिला (Women) सुरक्षित सीमा:' : 'Normal Safe Range (Women):'}
-                            </span>
-                            <strong style={{ color: '#14532D', fontFamily: 'var(--font-mono)' }}>{item.normalRangeFemale}</strong>
-                          </div>
+                    {/* Out of bounds insights */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--status-borderline-bg)', border: '1px solid var(--status-borderline-border)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--status-borderline-ink)', marginBottom: '4px' }}>
+                          <TrendingUp size={13} />
+                          <span>{lang === 'hi' ? 'ज्यादा (High) होने पर' : 'If Elevated'}</span>
                         </div>
-
-                        {/* What happens if High or Low */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                          <div style={{ padding: '0.75rem', backgroundColor: '#FEF9C3', border: '1px solid #FDE047', borderRadius: 'var(--radius-sharp)' }}>
-                            <strong style={{ color: '#854D0E', display: 'block', marginBottom: '0.2rem', fontSize: '0.8rem' }}>
-                              📈 {lang === 'hi' ? 'ज्यादा (High) होने पर क्या होता है?' : 'What if it is High?'}
-                            </strong>
-                            <p style={{ color: '#713F12', fontSize: '0.785rem' }}>
-                              {lang === 'hi' ? item.highImpactHi : item.highImpactEn}
-                            </p>
-                          </div>
-
-                          <div style={{ padding: '0.75rem', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 'var(--radius-sharp)' }}>
-                            <strong style={{ color: '#991B1B', display: 'block', marginBottom: '0.2rem', fontSize: '0.8rem' }}>
-                              📉 {lang === 'hi' ? 'कम (Low) होने पर क्या होता है?' : 'What if it is Low?'}
-                            </strong>
-                            <p style={{ color: '#7F1D1D', fontSize: '0.785rem' }}>
-                              {lang === 'hi' ? item.lowImpactHi : item.lowImpactEn}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Diet & Lifestyle Tips */}
-                        <div style={{
-                          padding: '0.75rem 1rem',
-                          backgroundColor: '#FAFBF8',
-                          border: '1px solid var(--hairline)',
-                          borderRadius: 'var(--radius-sharp)'
-                        }}>
-                          <strong style={{ color: 'var(--cobalt)', display: 'block', marginBottom: '0.2rem', fontSize: '0.8rem' }}>
-                            🥗 {lang === 'hi' ? 'सुधार के लिए क्या खाएं और क्या करें?' : 'Dietary & Lifestyle Recommendations:'}
-                          </strong>
-                          <p style={{ color: 'var(--ink-secondary)', fontSize: '0.8rem' }}>
-                            {lang === 'hi' ? item.dietTipsHi : item.dietTipsEn}
-                          </p>
-                        </div>
+                        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--status-borderline-ink)', lineHeight: 'var(--leading-xs)' }}>
+                          {lang === 'hi' ? item.highImpactHi : item.highImpactEn}
+                        </p>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
 
-        {/* Modal Footer */}
-        <div style={{
-          padding: '0.85rem 1.75rem',
-          borderTop: '1px solid var(--hairline)',
-          backgroundColor: '#FAFBF8',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>
-            ⚠️ {t.consultDoctor}
-          </span>
-          <button onClick={onClose} className="btn btn-secondary btn-sm">
-            {lang === 'hi' ? 'बंद करें (Close)' : 'Close'}
-          </button>
+                      <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--status-abnormal-bg)', border: '1px solid var(--status-abnormal-border)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--status-abnormal-ink)', marginBottom: '4px' }}>
+                          <TrendingDown size={13} />
+                          <span>{lang === 'hi' ? 'कम (Low) होने पर' : 'If Low'}</span>
+                        </div>
+                        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--status-abnormal-ink)', lineHeight: 'var(--leading-xs)' }}>
+                          {lang === 'hi' ? item.lowImpactHi : item.lowImpactEn}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Nutrition & Lifestyle */}
+                    <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--surface-sub)', border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--ink)', marginBottom: '4px' }}>
+                        <Sparkles size={13} style={{ color: 'var(--accent)' }} />
+                        <span>{lang === 'hi' ? 'आहार और जीवनशैली सुझाव' : 'Dietary & Lifestyle Recommendations'}</span>
+                      </div>
+                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-secondary)', lineHeight: 'var(--leading-xs)' }}>
+                        {lang === 'hi' ? item.dietTipsHi : item.dietTipsEn}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
+      )}
+
+      {/* Modal Actions */}
+      <div style={{ marginTop: '20px', paddingTop: '14px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>
+          Always consult your healthcare provider for medical decisions.
+        </span>
+        <Button variant="secondary" size="sm" onClick={onClose}>
+          Close Guide
+        </Button>
       </div>
-    </div>
+    </Modal>
   );
 }
 

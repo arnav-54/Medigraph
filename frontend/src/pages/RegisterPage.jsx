@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { User, Mail, Lock, ShieldCheck, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Button, Input, Alert } from '../components/ui';
 
 export function RegisterPage() {
   const [fullName, setFullName] = useState('');
@@ -17,7 +19,7 @@ export function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!consentData || !consentAI) {
-      setError('You must grant data processing and AI analysis consent to provision an account.');
+      setError('You must grant data processing and clinical analysis consent to create an account.');
       return;
     }
 
@@ -35,162 +37,110 @@ export function RegisterPage() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#FBFBFA',
-      padding: '2.5rem 1.5rem',
-      backgroundImage: 'radial-gradient(#E3E5DD 1px, transparent 1px)',
-      backgroundSize: '24px 24px'
-    }}>
-      <div style={{ maxWidth: '480px', width: '100%' }}>
-        {/* Brand Header */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '4px',
-            backgroundColor: '#0D3E6B',
-            color: '#FFFFFF',
-            fontFamily: 'var(--font-mono)',
-            fontWeight: 800,
-            fontSize: '1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 1rem',
-            boxShadow: '0 2px 8px rgba(13, 62, 107, 0.25)'
-          }}>
-            MG
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '24px', backgroundColor: 'var(--canvas)' }}>
+      <div style={{ width: '100%', maxWidth: '440px' }}>
+        {/* Brand Mark */}
+        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--ink)', color: 'var(--ink-inverse)', marginBottom: '14px', boxShadow: 'var(--shadow-sm)' }}>
+            <ShieldCheck size={20} strokeWidth={2} />
           </div>
-          <h1 style={{
-            fontFamily: 'var(--font-sans)',
-            fontSize: '1.75rem',
-            fontWeight: 700,
-            letterSpacing: '-0.03em',
-            color: '#121824'
-          }}>
-            Provision Patient Workspace
+          <h1 style={{ fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+            MediVault
           </h1>
-          <p style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.72rem',
-            color: '#728093',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            marginTop: '0.35rem'
-          }}>
-            Zero-Knowledge Longitudinal Clinical Archive
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-muted)', marginTop: '4px' }}>
+            Isolated, Encrypted Longitudinal Health Architecture
           </p>
         </div>
 
-        {/* Card */}
-        <div className="card" style={{ padding: '2rem', boxShadow: '0 8px 30px rgba(18, 24, 36, 0.06)' }}>
-          {error && (
-            <div className="alert alert-warning" style={{ marginBottom: '1.25rem' }}>
-              <span>⚠️</span>
-              <div>
-                <strong style={{ display: 'block', fontSize: '0.8rem' }}>Registration Notice</strong>
-                <span style={{ fontSize: '0.825rem' }}>{error}</span>
-              </div>
-            </div>
-          )}
+        {error && (
+          <Alert variant="critical" style={{ marginBottom: '16px' }} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
 
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="form-label">Full Legal Name</label>
-              <input
+        <Card>
+          <CardHeader>
+            <div>
+              <CardTitle as="h2">Create patient workspace</CardTitle>
+              <CardDescription>Your medical documents are encrypted and tenant-isolated</CardDescription>
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <Input
+                label="Full name"
                 type="text"
-                className="form-input"
+                icon={User}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Dr. Jane Doe / Patient Name"
+                placeholder="Jane Doe"
                 required
               />
-            </div>
 
-            <div className="form-group">
-              <label className="form-label">Email Address</label>
-              <input
+              <Input
+                label="Email address"
                 type="email"
-                className="form-input"
+                icon={Mail}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="patient@example.com"
                 required
               />
-            </div>
 
-            <div className="form-group">
-              <label className="form-label">Master Passphrase (Min. 8 characters)</label>
-              <input
+              <Input
+                label="Password (min 8 characters)"
                 type="password"
-                className="form-input"
+                icon={Lock}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                minLength={8}
                 required
               />
-            </div>
 
-            {/* Regulatory Consent Checkboxes */}
-            <div style={{
-              margin: '1.25rem 0',
-              padding: '1rem',
-              backgroundColor: '#FAFBF8',
-              border: '1px solid #E3E5DD',
-              borderRadius: 'var(--radius-subtle)'
-            }}>
-              <label style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', marginBottom: '0.75rem', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={consentData}
-                  onChange={(e) => setConsentData(e.target.checked)}
-                  style={{ marginTop: '0.2rem', width: 'auto' }}
-                  required
-                />
-                <span style={{ fontSize: '0.785rem', color: '#424E5E', lineHeight: 1.45 }}>
-                  <strong>GDPR Art. 6 / HIPAA Storage Consent:</strong> I authorize local encrypted ingestion and secure cryptographic storage of my diagnostic laboratory records.
-                </span>
-              </label>
+              {/* Consent Checkboxes */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '4px', padding: '12px', backgroundColor: 'var(--surface-sub)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: 'var(--text-xs)', color: 'var(--ink-secondary)', lineHeight: 'var(--leading-xs)' }}>
+                  <input
+                    type="checkbox"
+                    checked={consentData}
+                    onChange={(e) => setConsentData(e.target.checked)}
+                    style={{ marginTop: '2px', accentColor: 'var(--accent)' }}
+                  />
+                  <span>I authorize <strong>MediVault</strong> to store and parse my diagnostic records in an isolated tenant vault.</span>
+                </label>
 
-              <label style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={consentAI}
-                  onChange={(e) => setConsentAI(e.target.checked)}
-                  style={{ marginTop: '0.2rem', width: 'auto' }}
-                  required
-                />
-                <span style={{ fontSize: '0.785rem', color: '#424E5E', lineHeight: 1.45 }}>
-                  <strong>Biomarker Extraction Consent:</strong> I authorize deterministic parsing and OCR of laboratory panels for personal longitudinal trend visualization.
-                </span>
-              </label>
-            </div>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: 'var(--text-xs)', color: 'var(--ink-secondary)', lineHeight: 'var(--leading-xs)' }}>
+                  <input
+                    type="checkbox"
+                    checked={consentAI}
+                    onChange={(e) => setConsentAI(e.target.checked)}
+                    style={{ marginTop: '2px', accentColor: 'var(--accent)' }}
+                  />
+                  <span>I consent to deterministic OCR extraction and zero-retention AI clinical consultation.</span>
+                </label>
+              </div>
 
-            <button
-              type="submit"
-              className="btn btn-primary"
-              style={{ width: '100%', padding: '0.75rem', fontWeight: 600 }}
-              disabled={loading}
-            >
-              {loading ? 'Provisioning Vault...' : 'Provision Secure Workspace'}
-            </button>
-          </form>
+              <Button
+                type="submit"
+                variant="primary"
+                loading={loading}
+                style={{ width: '100%', marginTop: '4px' }}
+              >
+                Create Account
+              </Button>
+            </form>
+          </CardContent>
 
-          <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid #ECEEE6' }}>
-            <span style={{ fontSize: '0.825rem', color: '#728093' }}>
-              Already provisioned? <Link to="/login" style={{ fontWeight: 600, color: '#0D3E6B' }}>Sign in here</Link>
+          <CardFooter>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>
+              Already registered?
             </span>
-          </div>
-        </div>
-
-        <div style={{ textAlign: 'center', marginTop: '1.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: '#728093', lineHeight: 1.5 }}>
-          HIPAA & GDPR Architectural Isolation · Local Cryptographic Storage · Non-Diagnostic Clinical Computing
-        </div>
+            <Link to="/login" style={{ fontSize: 'var(--text-xs)', fontWeight: 500, color: 'var(--accent)' }}>
+              Sign in to vault →
+            </Link>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );

@@ -9,12 +9,36 @@ import {
   CartesianGrid,
   Legend
 } from 'recharts';
+import { LineChart as ChartIcon, BookOpen, ArrowUpRight, ArrowDownRight, Minus, AlertTriangle, Layers, Filter } from 'lucide-react';
 import { api } from '../api/client.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { BiomarkerDictionaryModal } from '../components/BiomarkerDictionaryModal.jsx';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge, SkeletonCard, EmptyState, Alert } from '../components/ui';
+
+function CustomChartTooltip({ active, payload, label }) {
+  if (!active || !payload || !payload.length) return null;
+
+  return (
+    <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)', fontSize: 'var(--text-xs)' }}>
+      <div style={{ color: 'var(--ink-muted)', marginBottom: '4px' }}>{label}</div>
+      {payload.map((entry, idx) => (
+        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--ink)', fontWeight: 600 }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: 'var(--radius-full)', backgroundColor: entry.color }} />
+          <span>{entry.name}:</span>
+          <span>{entry.value} {entry.payload.unit}</span>
+        </div>
+      ))}
+      {payload[0]?.payload?.source?.filename && (
+        <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid var(--border-subtle)', color: 'var(--ink-faint)', fontSize: 'var(--text-2xs)' }}>
+          Source: {payload[0].payload.source.filename}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function AnalyticsPage() {
-  const { t, lang } = useLanguage();
+  const { lang } = useLanguage();
   const [availableTests, setAvailableTests] = useState([]);
   const [selectedTest, setSelectedTest] = useState('');
   const [compareTest, setCompareTest] = useState('');
@@ -25,8 +49,8 @@ export function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dictionaryBiomarker, setDictionaryBiomarker] = useState(null);
+  const [dictionaryOpen, setDictionaryOpen] = useState(false);
 
-  // Load available tests catalog
   useEffect(() => {
     async function loadTests() {
       try {
@@ -49,10 +73,8 @@ export function AnalyticsPage() {
     loadTests();
   }, []);
 
-  // Fetch primary trend series
   useEffect(() => {
     if (!selectedTest) return;
-
     async function loadTrend() {
       setLoading(true);
       setError(null);
@@ -72,13 +94,11 @@ export function AnalyticsPage() {
     loadTrend();
   }, [selectedTest, onlyVerified]);
 
-  // Fetch comparison trend series
   useEffect(() => {
     if (!enableCompare || !compareTest) {
       setCompareTrendData(null);
       return;
     }
-
     async function loadCompareTrend() {
       try {
         const query = onlyVerified ? '?onlyVerified=true' : '';
@@ -87,336 +107,279 @@ export function AnalyticsPage() {
           setCompareTrendData(res.data.trend);
         }
       } catch (err) {
-        console.error('Failed to load comparison trend:', err);
+        console.error('Comparison trend error:', err);
       }
     }
     loadCompareTrend();
   }, [enableCompare, compareTest, onlyVerified]);
 
-  const stats = trendData?.statistics;
-  const primarySeries = trendData?.series || [];
+  // Combine primary and comparison series by testDate
+  const chartData = React.useMemo(() => {
+    if (!trendData || !trendData.series) return [];
 
-  // Merge series if comparing
-  const chartSeries = primarySeries.map((item, idx) => {
-    const primaryNum = Number(item.numericValue ?? item.normalizedValue ?? parseFloat(item.rawValue) ?? 0);
-    const entry = {
-      testDate: item.testDate,
-      value: primaryNum,
-      rawValue: item.rawValue,
-      referenceRange: item.referenceRangeRaw
-    };
+    const map = new Map();
+    trendData.series.forEach(item => {
+      const val = Number(item.numericValue ?? item.normalizedValue ?? parseFloat(item.rawValue) ?? 0);
+      map.set(item.testDate, {
+        testDate: item.testDate,
+        value: val,
+        unit: trendData.unit,
+        source: item.source
+      });
+    });
 
-    if (enableCompare && compareTrendData?.series?.[idx]) {
-      const compItem = compareTrendData.series[idx];
-      const compNum = Number(compItem.numericValue ?? compItem.normalizedValue ?? parseFloat(compItem.rawValue) ?? 0);
-      entry.compareValue = compNum;
+    if (enableCompare && compareTrendData && compareTrendData.series) {
+      compareTrendData.series.forEach(item => {
+        const val = Number(item.numericValue ?? item.normalizedValue ?? parseFloat(item.rawValue) ?? 0);
+        const existing = map.get(item.testDate) || { testDate: item.testDate };
+        existing.compareValue = val;
+        existing.compareUnit = compareTrendData.unit;
+        map.set(item.testDate, existing);
+      });
     }
-    return entry;
-  });
+
+    return Array.from(map.values()).sort((a, b) => new Date(a.testDate) - new Date(b.testDate));
+  }, [trendData, compareTrendData, enableCompare]);
+
+  const stats = trendData?.statistics || {};
+  const delta = stats.delta;
+  const DeltaIcon = delta > 0 ? ArrowUpRight : delta < 0 ? ArrowDownRight : Minus;
 
   return (
-    <div>
-      {/* Header Deck */}
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        border: '1px solid var(--hairline)',
-        borderRadius: 'var(--radius-card)',
-        padding: '1.75rem 2rem',
-        marginBottom: '2rem',
-        boxShadow: 'var(--shadow-press)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.5rem' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
-              <span className="specimen-tag" style={{ backgroundColor: '#F0FDF4', color: '#166534', borderColor: '#BBF7D0' }}>
-                <span className="live-indicator" style={{ backgroundColor: '#16A34A' }} />
-                {lang === 'hi' ? 'स्वास्थ्य ग्राफ व ट्रैकिंग' : 'LONGITUDINAL BIOMARKER TRAJECTORIES'}
-              </span>
-              <span className="status-pill status-pill-neutral">
-                {lang === 'hi' ? 'यूनिट नॉर्मलाइज्ड' : 'UNIT-NORMALIZED'}
-              </span>
-            </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <BiomarkerDictionaryModal
+        isOpen={dictionaryOpen}
+        onClose={() => setDictionaryOpen(false)}
+        initialSearch={dictionaryBiomarker}
+      />
 
-            <h1 style={{
-              fontFamily: 'var(--font-sans)',
-              fontSize: '1.875rem',
-              fontWeight: 700,
-              letterSpacing: '-0.03em',
-              color: 'var(--ink-primary)',
-              lineHeight: 1.15
-            }}>
-              {t.analyticsTitle || 'Biomarker Trends & Trajectories'}
-            </h1>
-
-            <p style={{ fontSize: '0.875rem', color: 'var(--ink-secondary)', marginTop: '0.35rem', maxWidth: '680px' }}>
-              {t.analyticsSubtitle || 'Compare your blood test results across multiple years to see if values are improving.'}
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <div style={{ minWidth: '220px' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4B5563', marginBottom: '0.25rem' }}>
-                {t.selectBiomarker || 'Select Lab Test:'}
-              </label>
-              <select
-                className="form-input"
-                style={{ fontWeight: 600, fontSize: '0.85rem' }}
-                value={selectedTest}
-                onChange={(e) => setSelectedTest(e.target.value)}
-              >
-                {availableTests.map((tItem, idx) => (
-                  <option key={idx} value={tItem.labTestId || tItem.rawName}>
-                    {tItem.displayName} ({tItem.unit})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Dictionary Trigger */}
-            <div style={{ paddingTop: '1.25rem' }}>
-              <button
-                type="button"
-                onClick={() => setDictionaryBiomarker(trendData?.testName || selectedTest)}
-                className="btn btn-secondary"
-                style={{ fontSize: '0.825rem' }}
-              >
-                📖 {t.learnMore || 'Learn About Test'}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Comparison and Filter Bar */}
-        <div style={{
-          marginTop: '1.5rem',
-          paddingTop: '1.25rem',
-          borderTop: '1px solid var(--hairline)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1.5rem',
-          flexWrap: 'wrap'
-        }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.825rem', fontWeight: 500 }}>
-            <input
-              type="checkbox"
-              checked={enableCompare}
-              onChange={(e) => setEnableCompare(e.target.checked)}
-            />
-            <span>{t.compareMode || 'Compare with second biomarker (e.g. HDL vs LDL)'}</span>
-          </label>
-
-          {enableCompare && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>{lang === 'hi' ? 'दूसरा टेस्ट:' : 'Compare with:'}</span>
-              <select
-                className="form-input"
-                style={{ fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}
-                value={compareTest}
-                onChange={(e) => setCompareTest(e.target.value)}
-              >
-                {availableTests.filter(tItem => (tItem.labTestId || tItem.rawName) !== selectedTest).map((tItem, idx) => (
-                  <option key={idx} value={tItem.labTestId || tItem.rawName}>
-                    {tItem.displayName} ({tItem.unit})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.825rem', marginLeft: 'auto' }}>
-            <input
-              type="checkbox"
-              checked={onlyVerified}
-              onChange={(e) => setOnlyVerified(e.target.checked)}
-            />
-            <span>{lang === 'hi' ? 'केवल सत्यापित रिकॉर्ड' : 'Verified records only'}</span>
-          </label>
-        </div>
-      </div>
-
-      {loading ? (
-        <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--ink-muted)' }}>
-          <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📊</div>
-          <div>{lang === 'hi' ? 'ग्राफ डेटा लोड हो रहा है...' : 'Calibrating trajectory series...'}</div>
-        </div>
-      ) : error ? (
-        <div className="alert alert-warning">{error}</div>
-      ) : !trendData || chartSeries.length === 0 ? (
-        <div className="clinical-card" style={{ padding: '3.5rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📈</div>
-          <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--ink-primary)' }}>
-            {lang === 'hi' ? 'कम से कम 2 रिपोर्ट अपलोड करें' : 'Insufficient Multi-Visit Data for Long-term Regression'}
-          </div>
-          <p style={{ fontSize: '0.85rem', color: 'var(--ink-secondary)', maxWidth: '440px', margin: '0.5rem auto 0' }}>
-            {lang === 'hi'
-              ? 'ग्राफ और ट्रेंड देखने के लिए अपनी पिछली लैब रिपोर्ट्स अपलोड करें।'
-              : 'Ingest additional historical lab panels to populate multi-point regression lines and velocity indicators.'}
+      {/* Page Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <h1 style={{ fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+            Biomarker Trajectory Analytics
+          </h1>
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-muted)', marginTop: '2px' }}>
+            Multi-year longitudinal trajectories computed deterministically across verified lab panels.
           </p>
         </div>
-      ) : (
-        <>
-          {/* Key Indicators */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-            <div className="clinical-card" style={{ marginBottom: 0, padding: '1.25rem' }}>
-              <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>
-                {t.latestReading || 'Latest Reading'}
+
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={BookOpen}
+          onClick={() => { setDictionaryBiomarker(trendData?.testName); setDictionaryOpen(true); }}
+        >
+          Biomarker Guide
+        </Button>
+      </div>
+
+      {error && (
+        <Alert variant="warning" onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Control Selector Bar */}
+      <Card>
+        <CardContent style={{ padding: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <div>
+                <label style={{ fontSize: 'var(--text-2xs)', fontWeight: 500, color: 'var(--ink-muted)', display: 'block', marginBottom: '4px' }}>
+                  Primary Biomarker
+                </label>
+                <select
+                  value={selectedTest}
+                  onChange={(e) => setSelectedTest(e.target.value)}
+                  style={{
+                    height: '34px',
+                    padding: '0 12px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border)',
+                    backgroundColor: 'var(--surface)',
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {availableTests.map((t) => (
+                    <option key={t.labTestId || t.rawName} value={t.labTestId || t.rawName}>
+                      {t.displayName} ({t.unit})
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginTop: '0.25rem' }}>
-                <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--ink-primary)' }}>
-                  {stats?.latestValue}
-                </span>
-                <span style={{ fontSize: '0.8rem', color: '#6B7280' }}>
-                  {trendData.unit}
-                </span>
-              </div>
+
+              {enableCompare && (
+                <div>
+                  <label style={{ fontSize: 'var(--text-2xs)', fontWeight: 500, color: 'var(--ink-muted)', display: 'block', marginBottom: '4px' }}>
+                    Compare With
+                  </label>
+                  <select
+                    value={compareTest}
+                    onChange={(e) => setCompareTest(e.target.value)}
+                    style={{
+                      height: '34px',
+                      padding: '0 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border)',
+                      backgroundColor: 'var(--surface)',
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 500,
+                      color: 'var(--ink)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {availableTests.filter(t => (t.labTestId || t.rawName) !== selectedTest).map((t) => (
+                      <option key={t.labTestId || t.rawName} value={t.labTestId || t.rawName}>
+                        {t.displayName} ({t.unit})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
-            <div className="clinical-card" style={{ marginBottom: 0, padding: '1.25rem' }}>
-              <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>
-                {t.baselineReading || 'Baseline Record'}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginTop: '0.25rem' }}>
-                <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--ink-primary)' }}>
-                  {stats?.baselineValue}
-                </span>
-                <span style={{ fontSize: '0.8rem', color: '#6B7280' }}>
-                  {trendData.unit}
-                </span>
-              </div>
-            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Button
+                variant={enableCompare ? 'accent' : 'secondary'}
+                size="sm"
+                icon={Layers}
+                onClick={() => setEnableCompare(!enableCompare)}
+              >
+                {enableCompare ? 'Hide Comparison' : 'Compare Second Test'}
+              </Button>
 
-            <div className="clinical-card" style={{ marginBottom: 0, padding: '1.25rem' }}>
-              <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>
-                {lang === 'hi' ? 'कुल अंतर (Change)' : 'Net Change (Δ)'}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginTop: '0.25rem' }}>
-                <span style={{
-                  fontSize: '1.75rem',
-                  fontWeight: 800,
-                  color: stats?.delta > 0 ? '#854D0E' : '#15803D'
-                }}>
-                  {stats?.delta !== null ? (stats.delta > 0 ? `+${stats.delta}` : stats.delta) : '0.0'}
-                </span>
-                <span style={{ fontSize: '0.8rem', color: '#6B7280' }}>
-                  {trendData.unit}
-                </span>
-              </div>
-            </div>
-
-            <div className="clinical-card" style={{ marginBottom: 0, padding: '1.25rem' }}>
-              <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>
-                {t.netTrajectory || 'Trend Direction'}
-              </div>
-              <div style={{ marginTop: '0.4rem' }}>
-                <span className={`status-pill ${stats?.direction === 'INCREASING' ? 'status-pill-elevated' : 'status-pill-normal'}`} style={{ fontSize: '0.85rem' }}>
-                  {stats?.direction === 'INCREASING'
-                    ? (lang === 'hi' ? '↑ बढ़ रहा है' : '↑ INCREASING')
-                    : stats?.direction === 'DECREASING'
-                    ? (lang === 'hi' ? '↓ घट रहा है' : '↓ DECREASING')
-                    : (lang === 'hi' ? '→ स्थिर है' : '→ STABLE')}
-                </span>
-              </div>
+              <Button
+                variant={onlyVerified ? 'primary' : 'ghost'}
+                size="sm"
+                icon={Filter}
+                onClick={() => setOnlyVerified(!onlyVerified)}
+              >
+                {onlyVerified ? 'Verified Only' : 'Include Pending'}
+              </Button>
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Interactive Chart Canvas */}
-          <div className="clinical-card">
-            <div className="clinical-card-header">
-              <div>
-                <div className="clinical-card-title">
-                  {trendData.testName} {enableCompare && compareTrendData ? `vs ${compareTrendData.testName}` : (lang === 'hi' ? 'स्वास्थ्य वक्र' : 'Longitudinal Curve')}
-                </div>
-                <div className="clinical-card-caption">
-                  {lang === 'hi' ? `माप: ${trendData.unit} · समय के साथ बदलाव` : `Calibrated in ${trendData.unit} across visits`}
-                </div>
+      {/* Metrics Row */}
+      {trendData && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+          <Card>
+            <CardContent style={{ padding: '16px' }}>
+              <span style={{ fontSize: 'var(--text-2xs)', color: 'var(--ink-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Latest Reading</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginTop: '4px' }}>
+                <span style={{ fontSize: 'var(--text-2xl)', fontWeight: 600, color: 'var(--ink)' }}>{stats.latestValue ?? '—'}</span>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>{trendData.unit}</span>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div style={{ height: '380px', width: '100%', marginTop: '1rem' }}>
+          <Card>
+            <CardContent style={{ padding: '16px' }}>
+              <span style={{ fontSize: 'var(--text-2xs)', color: 'var(--ink-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Baseline Ingestion</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginTop: '4px' }}>
+                <span style={{ fontSize: 'var(--text-2xl)', fontWeight: 600, color: 'var(--ink)' }}>{stats.baselineValue ?? '—'}</span>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>{trendData.unit}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent style={{ padding: '16px' }}>
+              <span style={{ fontSize: 'var(--text-2xs)', color: 'var(--ink-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total Delta (Rate)</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px', fontSize: 'var(--text-2xl)', fontWeight: 600, color: delta > 0 ? 'var(--status-borderline-ink)' : 'var(--ink)' }}>
+                <DeltaIcon size={18} />
+                <span>{delta !== null && delta !== undefined ? (delta > 0 ? `+${delta}` : delta) : '0.0'}</span>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)', fontWeight: 400 }}>{trendData.unit}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent style={{ padding: '16px' }}>
+              <span style={{ fontSize: 'var(--text-2xs)', color: 'var(--ink-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Trajectory Trend</span>
+              <div style={{ marginTop: '8px' }}>
+                <Badge variant={stats.direction === 'STABLE' ? 'normal' : 'borderline'} size="md">
+                  {stats.direction || 'STABLE'}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Recharts Canvas Card */}
+      <Card>
+        <CardHeader>
+          <div>
+            <CardTitle as="h3">{trendData?.testName || 'Biomarker'} Trajectory Curve</CardTitle>
+            <CardDescription>{chartData.length} sequential data points tracked over time</CardDescription>
+          </div>
+        </CardHeader>
+
+        <CardContent style={{ padding: '24px 20px 12px' }}>
+          {chartData.length === 0 ? (
+            <div style={{ padding: '40px 0' }}>
+              <EmptyState
+                icon={ChartIcon}
+                title="Insufficient Data Points"
+                description="At least 2 measurements with compatible units are required to construct a trajectory line."
+              />
+            </div>
+          ) : (
+            <div style={{ width: '100%', height: 320 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartSeries} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-subtle)" />
                   <XAxis
                     dataKey="testDate"
-                    stroke="#6B7280"
-                    tick={{ fontSize: 11 }}
+                    stroke="var(--ink-muted)"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={{ stroke: 'var(--border)' }}
                   />
                   <YAxis
-                    stroke="#6B7280"
-                    tick={{ fontSize: 11 }}
+                    stroke="var(--ink-muted)"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={{ stroke: 'var(--border)' }}
                     domain={['auto', 'auto']}
-                    unit={` ${trendData.unit}`}
                   />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const d = payload[0].payload;
-                        return (
-                          <div style={{
-                            backgroundColor: '#FFFFFF',
-                            padding: '0.85rem 1rem',
-                            border: '1px solid #CBD5E1',
-                            borderRadius: '8px',
-                            boxShadow: '0 4px 14px rgba(15, 23, 42, 0.1)'
-                          }}>
-                            <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#64748B', marginBottom: '0.35rem' }}>
-                              📅 {d.testDate}
-                            </div>
-                            <div style={{ color: '#0D9488', fontWeight: 800, fontSize: '1rem' }}>
-                              {trendData.testName}: {payload[0].value} {trendData.unit}
-                            </div>
-                            {enableCompare && payload[1] && (
-                              <div style={{ color: '#0284C7', fontWeight: 800, fontSize: '1rem', marginTop: '0.25rem' }}>
-                                {compareTrendData?.testName}: {payload[1].value} {compareTrendData?.unit}
-                              </div>
-                            )}
-                            {d.referenceRange && (
-                              <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '0.4rem', borderTop: '1px solid #F1F5F9', paddingTop: '0.35rem' }}>
-                                Safe Range: [{d.referenceRange}]
-                              </div>
-                            )}
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Legend />
+                  <Tooltip content={<CustomChartTooltip />} />
+                  <Legend verticalAlign="top" height={36} iconType="circle" iconSize={8} />
+
                   <Line
                     type="monotone"
                     dataKey="value"
-                    name={trendData.testName}
-                    stroke="#0D9488"
-                    strokeWidth={3}
-                    dot={{ fill: '#0D9488', r: 5 }}
-                    activeDot={{ r: 8, stroke: '#FFFFFF', strokeWidth: 2 }}
+                    name={trendData?.testName || 'Primary'}
+                    stroke="var(--accent)"
+                    strokeWidth={2.5}
+                    dot={{ fill: 'var(--accent)', r: 4, strokeWidth: 2, stroke: 'var(--surface)' }}
+                    activeDot={{ r: 6 }}
                   />
+
                   {enableCompare && compareTrendData && (
                     <Line
                       type="monotone"
                       dataKey="compareValue"
-                      name={compareTrendData.testName}
-                      stroke="#0284C7"
-                      strokeWidth={3}
+                      name={compareTrendData.testName || 'Comparison'}
+                      stroke="#6366F1"
+                      strokeWidth={2}
                       strokeDasharray="4 4"
-                      dot={{ fill: '#0284C7', r: 5 }}
-                      activeDot={{ r: 8, stroke: '#FFFFFF', strokeWidth: 2 }}
+                      dot={{ fill: '#6366F1', r: 4, strokeWidth: 2, stroke: 'var(--surface)' }}
+                      activeDot={{ r: 6 }}
                     />
                   )}
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          </div>
-        </>
-      )}
-
-      {/* Dictionary Modal for direct in-place explanation */}
-      {dictionaryBiomarker && (
-        <BiomarkerDictionaryModal
-          initialBiomarker={dictionaryBiomarker}
-          onClose={() => setDictionaryBiomarker(null)}
-        />
-      )}
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
