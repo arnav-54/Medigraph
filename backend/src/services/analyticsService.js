@@ -25,14 +25,25 @@ export async function getAvailableLabTests(userId) {
     distinct: ['testNameRaw', 'normalizedUnit']
   });
 
-  return tests.map((t) => ({
-    labTestId: t.labTest?.id || null,
-    displayName: t.labTest?.canonicalName || t.testNameRaw,
-    rawName: t.testNameRaw,
-    category: t.labTest?.category || 'General',
-    unit: t.normalizedUnit,
-    isCanonical: !!t.labTest
-  }));
+  const seen = new Set();
+  const distinctTests = [];
+  for (const t of tests) {
+    const displayName = t.labTest?.canonicalName || t.testNameRaw;
+    const key = `${displayName.toLowerCase()}_${(t.normalizedUnit || '').toLowerCase()}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      distinctTests.push({
+        labTestId: t.labTest?.id || null,
+        displayName,
+        rawName: t.testNameRaw,
+        category: t.labTest?.category || 'General',
+        unit: t.normalizedUnit,
+        isCanonical: !!t.labTest
+      });
+    }
+  }
+
+  return distinctTests;
 }
 
 /**
@@ -102,14 +113,20 @@ export async function getLabTestTrend(userId, { testIdentifier, unit = null, onl
 
   const selectedSeries = unitGroups.get(targetUnit) || [];
 
-  // Data points formatted for visualization
-  const dataPoints = selectedSeries.map((r, index) => {
+  // Data points formatted for visualization - sorted chronologically (oldest to newest)
+  const dataPoints = selectedSeries.map((r) => {
+    const d = new Date(r.testDate || Date.now());
+    const num = r.normalizedValue !== undefined && r.normalizedValue !== null
+      ? r.normalizedValue
+      : parseFloat(r.rawValue) || 0;
+
     return {
       id: r.id,
-      testDate: r.testDate.toISOString().slice(0, 10),
-      timestamp: r.testDate.getTime(),
+      testDate: d.toISOString().slice(0, 10),
+      timestamp: d.getTime(),
       rawValue: r.rawValue,
-      numericValue: r.normalizedValue,
+      numericValue: num,
+      normalizedValue: num,
       unit: targetUnit,
       referenceRangeRaw: r.referenceRangeRaw,
       refLow: r.refLow,
@@ -117,12 +134,12 @@ export async function getLabTestTrend(userId, { testIdentifier, unit = null, onl
       isAbnormalFlag: r.isAbnormalFlag,
       verificationStatus: r.verificationStatus,
       source: {
-        documentId: r.extractedRecord.documentId,
-        filename: r.extractedRecord.document.originalFilename,
-        pageNumber: r.extractedRecord.pageNumber
+        documentId: r.extractedRecord?.documentId,
+        filename: r.extractedRecord?.document?.originalFilename || 'Document',
+        pageNumber: r.extractedRecord?.pageNumber || 1
       }
     };
-  });
+  }).sort((a, b) => a.timestamp - b.timestamp);
 
   // Trend statistics calculation (deterministic)
   const numericValues = dataPoints
@@ -172,9 +189,9 @@ export async function getLabTestTrend(userId, { testIdentifier, unit = null, onl
       ? 'At least 2 measurements with compatible units are required to calculate trend trajectories.'
       : null,
     statistics: {
-      count,
-      latestValue: count > 0 ? numericValues[count - 1] : null,
-      baselineValue: count > 0 ? numericValues[0] : null,
+      count: numericValues.length,
+      latestValue: numericValues.length > 0 ? numericValues[numericValues.length - 1] : null,
+      baselineValue: numericValues.length > 0 ? numericValues[0] : null,
       delta,
       percentChange,
       direction,
@@ -217,3 +234,4 @@ export async function getLabTrendsOverview(userId) {
 
   return previews;
 }
+
