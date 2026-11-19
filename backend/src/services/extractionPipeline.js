@@ -53,6 +53,17 @@ export function fallbackLocalExtract(buffer, document) {
   const rawString = buffer.toString('utf-8');
   let extractedText = '';
 
+  // Extract PDF Tj text operator blocks if present (common in digital lab PDFs)
+  const tjRegex = /\(([^)]+)\)\s*Tj/g;
+  let tjMatch;
+  const tjLines = [];
+  while ((tjMatch = tjRegex.exec(rawString)) !== null) {
+    tjLines.push(tjMatch[1]);
+  }
+  if (tjLines.length > 0) {
+    extractedText += tjLines.join('\n') + '\n';
+  }
+
   // Extract readable text streams from PDF if uncompressed
   const streamRegex = /stream[\r\n]+([\s\S]*?)[\r\n]+endstream/g;
   let match;
@@ -93,3 +104,4 @@ export function fallbackLocalExtract(buffer, document) {
     processing_time_ms: 10
   };
 }
+

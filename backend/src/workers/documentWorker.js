@@ -30,7 +30,9 @@ export async function executeDocumentProcessing(documentId) {
     return;
   }
 
-  const latestJob = document.processingJobs[0];
+  const latestJob = (document.processingJobs && document.processingJobs.length > 0)
+    ? document.processingJobs[0]
+    : null;
 
   // Mark PROCESSING
   await prisma.$transaction([
