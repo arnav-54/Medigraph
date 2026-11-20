@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ClipboardList, Plus, FileText, Check, Save, Printer, Calendar, Shield } from 'lucide-react';
 import { api } from '../api/client.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge, SkeletonCard, EmptyState, Alert } from '../components/ui';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge, Skeleton, SkeletonCard, EmptyState, Alert } from '../components/ui';
 
 export function SummariesPage() {
   const { lang, t } = useLanguage();
