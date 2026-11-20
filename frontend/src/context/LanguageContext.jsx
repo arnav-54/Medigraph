@@ -53,7 +53,7 @@ export const TRANSLATIONS = {
     // Login
     loginTitle: 'Welcome to MediGraph AI',
     loginSubtitle: 'Your trusted personal health document organizer and tracker.',
-    enterDemo: '⚡ Enter Instant Demo (Jane Doe)',
+    enterDemo: 'Enter Instant Demo (Jane Doe)',
     demoDesc: 'Explore verified health records, 27 extracted lab tests, and live graphs instantly.',
     orSignIn: 'Or Sign In with Email',
     emailLabel: 'Email Address',
@@ -156,7 +156,7 @@ export const TRANSLATIONS = {
     localStorageMsg: 'Local Cryptographic Vault (Zero Third-Party Cloud Transit)',
     dataPortabilityTitle: 'Download Complete Health Archive (GDPR Art. 20)',
     dataPortabilityDesc: 'Download your entire medical record history including lab values, unit conversions, and dates in JSON format.',
-    downloadBtn: '📥 Download Complete Health Archive',
+    downloadBtn: 'Download Complete Health Archive',
     dangerZoneTitle: 'Danger Zone: Permanently Delete Account',
     dangerZoneDesc: 'Permanently deletes all your uploaded reports, extracted lab values, and account history from disk. This cannot be undone.',
     confirmPasswordLabel: 'Confirm Password to Authorize Deletion',
