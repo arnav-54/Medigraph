@@ -121,10 +121,10 @@ export function UploadPage() {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '40px 24px',
-              borderRadius: 'var(--radius-md)',
-              border: `2px dashed ${dragActive ? 'var(--accent)' : 'var(--border)'}`,
-              backgroundColor: dragActive ? 'var(--accent-subtle)' : 'var(--surface-sub)',
+              padding: '48px 24px',
+              borderRadius: 'var(--radius-xl)',
+              border: `2px dashed ${dragActive ? '#065F46' : 'var(--border-strong)'}`,
+              backgroundColor: dragActive ? 'var(--accent-subtle)' : '#FAFCFB',
               transition: 'all var(--transition-fast)',
               cursor: 'pointer',
               textAlign: 'center'
@@ -140,35 +140,45 @@ export function UploadPage() {
             />
 
             <div style={{
-              width: '48px',
-              height: '48px',
+              width: '56px',
+              height: '56px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--surface)',
-              border: '1px solid var(--border)',
+              background: 'linear-gradient(135deg, #064E3B 0%, #065F46 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--accent)',
+              color: '#FFFFFF',
               marginBottom: '16px',
-              boxShadow: 'var(--shadow-xs)'
+              boxShadow: '0 4px 14px rgba(6, 78, 59, 0.25)'
             }}>
-              <UploadCloud size={24} strokeWidth={1.75} />
+              <UploadCloud size={28} strokeWidth={2.2} />
             </div>
 
-            <div style={{ fontSize: 'var(--text-md)', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em' }}>
+            <div style={{ fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
               Select diagnostic report or drop file here
             </div>
 
-            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)', marginTop: '6px', maxWidth: '360px', lineHeight: 'var(--leading-xs)' }}>
+            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-muted)', marginTop: '6px', maxWidth: '400px', lineHeight: 1.5 }}>
               Supports official lab report PDFs, scans, and camera photos up to 15MB.
             </p>
 
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '16px' }}>
-              <Badge variant="neutral" size="sm">CBC Panel</Badge>
-              <Badge variant="neutral" size="sm">Metabolic / KFT</Badge>
-              <Badge variant="neutral" size="sm">Lipid Profile</Badge>
-              <Badge variant="neutral" size="sm">Thyroid TSH</Badge>
-              <Badge variant="neutral" size="sm">Vitamin D & B12</Badge>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '18px' }}>
+              {['CBC Panel', 'Metabolic / KFT', 'Lipid Profile', 'Thyroid TSH', 'Vitamin D & B12'].map((badge) => (
+                <span
+                  key={badge}
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: '9999px',
+                    backgroundColor: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: 'var(--ink-secondary)'
+                  }}
+                >
+                  {badge}
+                </span>
+              ))}
             </div>
           </div>
 
