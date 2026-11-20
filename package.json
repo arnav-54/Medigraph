@@ -1,7 +1,7 @@
 {
   "name": "medigraph-ai",
-  "version": "1.0.0",
-  "description": "Longitudinal Health-Document Intelligence Platform",
+  "version": "1.1.0",
+  "description": "MediVault — Longitudinal Health Intelligence Platform",
   "private": true,
   "workspaces": [
     "backend",
