@@ -8,10 +8,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   font-family: var(--font-sans);
-  font-weight: 500;
-  border-radius: var(--radius-sm);
+  font-weight: 600;
+  border-radius: var(--radius-pill);
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
@@ -32,34 +32,37 @@
 
 /* Sizes */
 .mv-btn--sm {
-  height: 28px;
-  padding: 0 10px;
+  height: 32px;
+  padding: 0 14px;
   font-size: var(--text-xs);
   line-height: var(--leading-xs);
 }
 
 .mv-btn--md {
-  height: 36px;
-  padding: 0 14px;
+  height: 40px;
+  padding: 0 18px;
   font-size: var(--text-sm);
   line-height: var(--leading-sm);
 }
 
 .mv-btn--lg {
-  height: 42px;
-  padding: 0 18px;
+  height: 46px;
+  padding: 0 24px;
   font-size: var(--text-base);
   line-height: var(--leading-base);
 }
 
 /* Variants */
 .mv-btn--primary {
-  background-color: var(--ink);
-  color: var(--ink-inverse);
-  box-shadow: var(--shadow-xs);
+  background: linear-gradient(135deg, #065F46 0%, #047857 100%);
+  color: #FFFFFF;
+  border-color: #064E3B;
+  box-shadow: 0 2px 8px rgba(6, 95, 70, 0.25);
 }
 .mv-btn--primary:hover {
-  background-color: #27272A;
+  background: linear-gradient(135deg, #047857 0%, #065F46 100%);
+  box-shadow: 0 4px 14px rgba(6, 95, 70, 0.35);
+  transform: translateY(-1px);
 }
 
 .mv-btn--secondary {
@@ -69,8 +72,10 @@
   box-shadow: var(--shadow-xs);
 }
 .mv-btn--secondary:hover {
-  background-color: var(--surface-hover);
-  border-color: var(--border-strong);
+  background-color: #F8FAFC;
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
 }
 
 .mv-btn--subtle {
@@ -82,12 +87,15 @@
 }
 
 .mv-btn--accent {
-  background-color: var(--accent);
-  color: var(--ink-inverse);
-  box-shadow: var(--shadow-xs);
+  background: linear-gradient(135deg, #065F46 0%, #047857 100%);
+  color: #FFFFFF;
+  border-color: #064E3B;
+  box-shadow: 0 2px 8px rgba(6, 95, 70, 0.25);
 }
 .mv-btn--accent:hover {
-  background-color: var(--accent-hover);
+  background: linear-gradient(135deg, #047857 0%, #065F46 100%);
+  box-shadow: 0 4px 14px rgba(6, 95, 70, 0.35);
+  transform: translateY(-1px);
 }
 
 .mv-btn--destructive {
@@ -104,7 +112,7 @@
   color: var(--ink-secondary);
 }
 .mv-btn--ghost:hover {
-  background-color: var(--surface-hover);
+  background-color: var(--surface-sub);
   color: var(--ink);
 }
 
@@ -212,19 +220,20 @@
 .mv-card {
   background-color: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-xs);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .mv-card--hover:hover {
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-sm);
+  border-color: rgba(6, 95, 70, 0.25);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .mv-card-header {
-  padding: 16px 20px;
+  padding: 18px 24px;
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
@@ -234,9 +243,9 @@
 
 .mv-card-title {
   font-size: var(--text-md);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--ink);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .mv-card-description {
@@ -246,11 +255,11 @@
 }
 
 .mv-card-content {
-  padding: 20px;
+  padding: 24px;
 }
 
 .mv-card-footer {
-  padding: 12px 20px;
+  padding: 14px 24px;
   background-color: var(--surface-sub);
   border-top: 1px solid var(--border-subtle);
   display: flex;
