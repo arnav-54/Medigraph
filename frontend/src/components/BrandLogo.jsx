@@ -9,7 +9,11 @@ export function BrandLogo({ size = 'md', light = false, showTagline = true, icon
   const currentSize = iconSizes[size] || iconSizes.md;
 
   return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: size === 'sm' ? '10px' : '12px', userSelect: 'none' }}>
+    <div
+      role="banner"
+      aria-label="MediVault Clinical Records"
+      style={{ display: 'inline-flex', alignItems: 'center', gap: size === 'sm' ? '10px' : '12px', userSelect: 'none' }}
+    >
       {/* Authentic Clinical Emblem — Pure Minimalist Geometry */}
       <div
         style={{
