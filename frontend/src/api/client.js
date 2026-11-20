@@ -3,6 +3,16 @@
  */
 let isRefreshing = false;
 
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
+function formatUrl(endpoint) {
+  if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
+    return endpoint;
+  }
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  return `${API_BASE}${cleanEndpoint}`;
+}
+
 export async function apiRequest(endpoint, options = {}, isRetry = false) {
   const correlationId = 'client-' + Math.random().toString(36).substring(2, 12);
   const token = typeof window !== 'undefined' ? localStorage.getItem('medigraph_token') : null;
@@ -19,7 +29,8 @@ export async function apiRequest(endpoint, options = {}, isRetry = false) {
     options.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
   }
 
-  const response = await fetch(endpoint, {
+  const targetUrl = formatUrl(endpoint);
+  const response = await fetch(targetUrl, {
     ...options,
     headers,
     credentials: 'include' // sends HttpOnly session cookies
@@ -30,7 +41,7 @@ export async function apiRequest(endpoint, options = {}, isRetry = false) {
     if (!isRefreshing) {
       isRefreshing = true;
       try {
-        const refreshRes = await fetch('/api/v1/auth/refresh', {
+        const refreshRes = await fetch(formatUrl('/api/v1/auth/refresh'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include'

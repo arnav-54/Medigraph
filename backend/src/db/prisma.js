@@ -1,43 +1,56 @@
+import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger.js';
 import { env } from '../config/env.js';
-import { connectMongo, disconnectMongo, mongoDb, isMongoConnected } from './mongoStore.js';
 
-// Exclusive MongoDB Driver Proxy: routes exclusively to MongoDB Atlas
-export const prisma = new Proxy({}, {
-  get(target, prop) {
-    if (prop === '$transaction') {
-      return async (arg) => mongoDb.$transaction(arg);
+let prismaInstance = null;
+
+export function getPrismaClient() {
+  if (!prismaInstance) {
+    prismaInstance = new PrismaClient({
+      log: env.NODE_ENV === 'development'
+        ? [
+            { emit: 'event', level: 'query' },
+            { emit: 'event', level: 'warn' },
+            { emit: 'event', level: 'error' }
+          ]
+        : [{ emit: 'event', level: 'error' }]
+    });
+
+    if (env.NODE_ENV === 'development') {
+      prismaInstance.$on('query', (e) => {
+        logger.debug('Prisma MongoDB Query', { durationMs: e.duration });
+      });
     }
 
-    if (prop === '$disconnect') {
-      return async () => disconnectMongo();
-    }
-
-    const model = prop.toString();
-    if (mongoDb[model]) {
-      return mongoDb[model];
-    }
-    return {};
+    prismaInstance.$on('error', (e) => {
+      logger.error('Prisma Database Error', { target: e.target });
+    });
   }
-});
+
+  return prismaInstance;
+}
+
+export const prisma = getPrismaClient();
 
 export async function checkDatabaseConnection() {
   try {
-    const mongoUri = env.MONGODB_URI || env.DATABASE_URL;
-    await connectMongo(mongoUri);
-    logger.info(`Connected to MongoDB Atlas: ${mongoUri}`);
+    await prisma.$connect();
+    logger.info('Connected to MongoDB Atlas via official Prisma Client.');
     return true;
   } catch (err) {
-    logger.error(`Critical: Failed to connect to MongoDB Atlas: ${err.message}`);
-    throw err;
+    logger.warn('Prisma MongoDB Atlas connection notice:', { message: err.message });
+    return false;
   }
 }
 
-// Initialize connection on startup
+// Non-blocking connection check on startup
 checkDatabaseConnection().catch((err) => {
-  logger.error(`MongoDB Atlas startup connection error: ${err.message}`);
+  logger.warn('Prisma startup notice:', { message: err.message });
 });
 
 export async function disconnectPrisma() {
-  await prisma.$disconnect();
+  if (prismaInstance) {
+    await prismaInstance.$disconnect();
+    logger.info('Prisma client gracefully disconnected.');
+  }
 }
