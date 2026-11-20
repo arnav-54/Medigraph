@@ -111,7 +111,7 @@ export function SummariesPage() {
       )}
 
       {/* Split Deck Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 300px) 1fr', gap: '16px', alignItems: 'flex-start' }}>
+      <div className="mv-split-deck">
         {/* Left Column: Index of Summaries */}
         <Card>
           <CardHeader>

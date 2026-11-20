@@ -8,6 +8,12 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const checkAuth = async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('medigraph_token') : null;
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
     try {
       const res = await api.get('/api/v1/auth/me');
       if (res.success && res.data?.user) {

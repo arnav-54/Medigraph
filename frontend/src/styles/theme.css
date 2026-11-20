@@ -1,40 +1,80 @@
 /* ==========================================================================
-   MEDIVAULT — LAYOUT INFRASTRUCTURE ONLY
-   This file contains ONLY structural layout classes.
-   No token definitions, no color overrides, no font assignments.
+   MEDIVAULT — RESPONSIVE LAYOUT & STRUCTURAL SYSTEM
+   Fully responsive across mobile (320px–480px), tablet (481px–1024px),
+   and desktop (1025px+)
    ========================================================================== */
 
 /* App Shell */
-.app-container {
+.app-container,
+.mv-app-shell {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--canvas);
 }
 
-.main-content {
-  flex: 1;
+/* Sidebar Navigation */
+.mv-sidebar {
+  width: 260px;
+  min-width: 260px;
+  background-color: var(--surface);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 45;
+  flex-shrink: 0;
+  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.02);
+  transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.content-body {
-  flex: 1;
-  padding: 2rem 2.5rem 4rem;
-  max-width: 1360px;
-  margin: 0 auto;
-  width: 100%;
+/* Mobile Sidebar Drawer */
+@media (max-width: 1024px) {
+  .mv-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 82vw;
+    z-index: 55;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
+    transform: translateX(-100%);
+    display: flex;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  .mv-sidebar.mobile-drawer-open {
+    transform: translateX(0);
+    pointer-events: auto;
+    visibility: visible;
+  }
+}
+
+/* Mobile Drawer Backdrop */
+.mv-sidebar-backdrop {
+  display: none;
 }
 
 @media (max-width: 1024px) {
-  .content-body { padding: 1.5rem 1.25rem 3rem; }
+  .mv-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background-color: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: fadeIn 200ms ease;
+  }
 }
 
-@media (max-width: 640px) {
-  .content-body { padding: 1rem 1rem 2rem; }
-}
-
-/* Mobile sidebar drawer */
+/* Mobile toggle button */
 .mv-mobile-toggle {
   display: none;
 }
@@ -44,17 +84,125 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: var(--shadow-xs);
   }
 }
 
-/* Live indicator dot */
-.live-indicator {
-  width: 7px;
-  height: 7px;
-  background-color: #22C55E;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
+/* Main Layout Area */
+.mv-main-layout {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Topbar Header */
+.mv-topbar {
+  height: 62px;
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+@media (max-width: 768px) {
+  .mv-topbar {
+    padding: 0 14px;
+    height: 56px;
+  }
+}
+
+/* Responsive Content Container */
+.mv-content-container {
+  flex: 1;
+  padding: 28px 28px 64px;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 1024px) {
+  .mv-content-container {
+    padding: 20px 20px 48px;
+  }
+}
+
+@media (max-width: 640px) {
+  .mv-content-container {
+    padding: 14px 12px 40px;
+  }
+}
+
+/* Footer */
+.mv-footer {
+  border-top: 1px solid var(--border);
+  background-color: var(--surface);
+  padding: 18px 28px;
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .mv-footer {
+    padding: 14px 16px;
+    font-size: 11px;
+  }
+}
+
+/* Split Deck (Summaries, 2-column layouts) */
+.mv-split-deck {
+  display: grid;
+  grid-template-columns: minmax(260px, 300px) 1fr;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+@media (max-width: 860px) {
+  .mv-split-deck {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Responsive grids */
+.mv-grid-autofit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 480px) {
+  .mv-grid-autofit {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Hide on mobile / tablet utilities */
+@media (max-width: 640px) {
+  .mv-hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .mv-hide-xs {
+    display: none !important;
+  }
 }
 
 /* Responsive table utility */
@@ -62,4 +210,10 @@
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

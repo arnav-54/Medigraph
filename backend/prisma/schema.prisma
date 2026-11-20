@@ -1,9 +1,8 @@
 // Prisma Schema for MediGraph AI
 // 16 Normalized Entities with Provenance, Deterministic Validation, and Multi-tenant Isolation
-// Native MongoDB Datasource
 
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -48,7 +47,7 @@ enum MessageSender {
 }
 
 model User {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  id           String    @id @default(uuid())
   email        String    @unique
   passwordHash String
   role         UserRole  @default(PATIENT)
@@ -57,21 +56,23 @@ model User {
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
 
-  profile            UserProfile?
-  documents          Document[]
-  extractedRecords   ExtractedRecord[]
-  labResults         LabResult[]
-  medicalEvents      MedicalEvent[]
-  documentChunks     DocumentChunk[]
-  chatSessions       ChatSession[]
+  profile           UserProfile?
+  documents         Document[]
+  extractedRecords  ExtractedRecord[]
+  labResults        LabResult[]
+  medicalEvents     MedicalEvent[]
+  documentChunks    DocumentChunk[]
+  chatSessions      ChatSession[]
   generatedSummaries GeneratedSummary[]
-  auditLogs          AuditLog[]
-  consents           ConsentRecord[]
+  auditLogs         AuditLog[]
+  consents          ConsentRecord[]
+
+  @@index([email])
 }
 
 model UserProfile {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String   @unique @db.ObjectId
+  id              String   @id @default(uuid())
+  userId          String   @unique
   fullName        String?
   dateOfBirth     DateTime?
   gender          String?
@@ -84,8 +85,8 @@ model UserProfile {
 }
 
 model Document {
-  id               String         @id @default(auto()) @map("_id") @db.ObjectId
-  userId           String         @db.ObjectId
+  id               String         @id @default(uuid())
+  userId           String
   originalFilename String
   storageKey       String
   mimeType         String
@@ -98,7 +99,7 @@ model Document {
   updatedAt        DateTime       @updatedAt
   deletedAt        DateTime?
 
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   pages            DocumentPage[]
   processingJobs   ProcessingJob[]
   extractedRecords ExtractedRecord[]
@@ -111,10 +112,10 @@ model Document {
 }
 
 model DocumentPage {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  documentId    String   @db.ObjectId
+  id            String   @id @default(uuid())
+  documentId    String
   pageNumber    Int
-  rawText       String
+  rawText       String   @db.Text
   ocrConfidence Float    @default(1.0)
   hasImages     Boolean  @default(false)
   width         Int?
@@ -128,13 +129,13 @@ model DocumentPage {
 }
 
 model ProcessingJob {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  documentId  String    @db.ObjectId
+  id          String    @id @default(uuid())
+  documentId  String
   queueJobId  String?
   status      JobStatus @default(PENDING)
   attempts    Int       @default(0)
   maxAttempts Int       @default(3)
-  lastError   String?
+  lastError   String?   @db.Text
   metadata    Json?
   startedAt   DateTime?
   completedAt DateTime?
@@ -148,12 +149,12 @@ model ProcessingJob {
 }
 
 model ExtractedRecord {
-  id                   String             @id @default(auto()) @map("_id") @db.ObjectId
-  documentId           String             @db.ObjectId
-  userId               String             @db.ObjectId
+  id                   String             @id @default(uuid())
+  documentId           String
+  userId               String
   pageNumber           Int
   recordType           String             // e.g. "LAB_TEST", "DIAGNOSIS", "MEDICATION"
-  rawText              String
+  rawText              String             @db.Text
   extractionConfidence Float              @default(1.0)
   verificationStatus   VerificationStatus @default(PENDING_REVIEW)
   reviewerNotes        String?
@@ -169,23 +170,25 @@ model ExtractedRecord {
 }
 
 model LabTest {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  standardCode  String?  @unique // LOINC or internal canonical code
+  id           String   @id @default(uuid())
+  standardCode String?  @unique // LOINC or internal canonical code
   canonicalName String   @unique // e.g. "Hemoglobin", "HbA1c", "Serum Creatinine"
-  category      String   // e.g. "Hematology", "Metabolic", "Lipid Panel"
-  defaultUnit   String?
-  aliases       Json?    // alternative names encountered in OCR
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  category     String   // e.g. "Hematology", "Metabolic", "Lipid Panel"
+  defaultUnit  String?
+  aliases      Json?    // alternative names encountered in OCR
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   labResults LabResult[]
+
+  @@index([canonicalName])
 }
 
 model LabResult {
-  id                 String             @id @default(auto()) @map("_id") @db.ObjectId
-  extractedRecordId  String             @db.ObjectId
-  labTestId          String?            @db.ObjectId
-  userId             String             @db.ObjectId
+  id                 String             @id @default(uuid())
+  extractedRecordId  String
+  labTestId          String?
+  userId             String
   testNameRaw        String
   rawValue           String
   normalizedValue    Float?
@@ -210,13 +213,13 @@ model LabResult {
 }
 
 model MedicalEvent {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String   @db.ObjectId
-  documentId  String?  @db.ObjectId
+  id          String   @id @default(uuid())
+  userId      String
+  documentId  String?
   eventType   String   // e.g. "LAB_PANEL", "PRESCRIPTION", "IMAGING", "CLINICAL_VISIT"
   title       String
   eventDate   DateTime
-  description String?
+  description String?  @db.Text
   metadata    Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -229,18 +232,18 @@ model MedicalEvent {
 }
 
 model DocumentChunk {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  documentId String   @db.ObjectId
-  userId     String   @db.ObjectId
-  pageNumber Int
-  chunkIndex Int
-  content    String
-  tokenCount Int
-  metadata   Json?
-  createdAt  DateTime @default(now())
+  id          String   @id @default(uuid())
+  documentId  String
+  userId      String
+  pageNumber  Int
+  chunkIndex  Int
+  content     String   @db.Text
+  tokenCount  Int
+  metadata    Json?
+  createdAt   DateTime @default(now())
 
-  document           Document            @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document           Document             @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   embeddingReference EmbeddingReference?
 
   @@unique([documentId, chunkIndex])
@@ -249,19 +252,21 @@ model DocumentChunk {
 }
 
 model EmbeddingReference {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  chunkId   String   @unique @db.ObjectId
-  modelName String
-  dimension Int
-  embedding String   // Serialized vector representation
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  chunkId    String   @unique
+  modelName  String
+  dimension  Int
+  embedding  String   @db.Text // Serialized vector or pgvector representation
+  createdAt  DateTime @default(now())
 
   chunk DocumentChunk @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+
+  @@index([chunkId])
 }
 
 model ChatSession {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String    @db.ObjectId
+  id        String    @id @default(uuid())
+  userId    String
   title     String    @default("Health Query Session")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -274,10 +279,10 @@ model ChatSession {
 }
 
 model ChatMessage {
-  id                  String        @id @default(auto()) @map("_id") @db.ObjectId
-  sessionId           String        @db.ObjectId
+  id                  String        @id @default(uuid())
+  sessionId           String
   sender              MessageSender
-  content             String
+  content             String        @db.Text
   citations           Json?         // Array of { documentId, pageNumber, excerpt }
   isHallucinationFlag Boolean       @default(false)
   createdAt           DateTime      @default(now())
@@ -288,15 +293,15 @@ model ChatMessage {
 }
 
 model GeneratedSummary {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String    @db.ObjectId
+  id                String    @id @default(uuid())
+  userId            String
   title             String
-  summaryText       String
+  summaryText       String    @db.Text
   timeRangeStart    DateTime?
   timeRangeEnd      DateTime?
   documentsIncluded Json      // Array of document IDs consulted
   isUserEdited      Boolean   @default(false)
-  disclaimer        String
+  disclaimer        String    @db.Text
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -306,8 +311,8 @@ model GeneratedSummary {
 }
 
 model AuditLog {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId       String?  @db.ObjectId
+  id           String   @id @default(uuid())
+  userId       String?
   action       String   // e.g. "AUTH_LOGIN", "DOC_UPLOAD", "VALUE_EDIT", "DOC_EXPORT", "ACCOUNT_DELETE"
   resourceType String   // e.g. "DOCUMENT", "LAB_RESULT", "USER"
   resourceId   String?
@@ -323,8 +328,8 @@ model AuditLog {
 }
 
 model ConsentRecord {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String    @db.ObjectId
+  id          String    @id @default(uuid())
+  userId      String
   consentType String    // e.g. "DATA_PROCESSING", "AI_ANALYSIS", "PRIVACY_POLICY"
   granted     Boolean   @default(true)
   version     String    @default("1.0")
@@ -337,3 +342,4 @@ model ConsentRecord {
 
   @@index([userId, consentType])
 }
+

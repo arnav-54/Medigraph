@@ -149,8 +149,8 @@ export async function loginUser({ email, password, ipAddress = null, userAgent =
   });
 
   if (!user || !user.isActive) {
-    // Constant time verification dummy to prevent timing attack enumeration
-    await argon2.verify('$argon2id$v=19$m=65536,t=3,p=4$dummyhashdummyhashdummyhash', 'dummy');
+    // Constant time dummy to prevent timing attack enumeration
+    await argon2.verify('$argon2id$v=19$m=65536,t=3,p=4$dummysaltdummysaltdummysalt$dummyhashvaluedummyhashvaluedummyhashvaluedummy', Buffer.from('dummy'));
     throw new UnauthorizedError('Invalid email or password');
   }
 

@@ -59,7 +59,7 @@ export function Layout() {
   const displayName = user?.fullName || (user?.email ? user.email.split('@')[0] : 'Patient');
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--canvas)', fontFamily: 'var(--font-sans)' }}>
+    <div className="mv-app-shell" style={{ fontFamily: 'var(--font-sans)' }}>
       {/* Global Modals */}
       <BiomarkerDictionaryModal isOpen={dictionaryOpen} onClose={() => setDictionaryOpen(false)} />
       <LanguageSelectorModal isOpen={langModalOpen} onClose={() => setLangModalOpen(false)} />
@@ -68,34 +68,12 @@ export function Layout() {
       {mobileNavOpen && (
         <div
           onClick={() => setMobileNavOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 40,
-            backgroundColor: 'rgba(15, 23, 42, 0.45)',
-            backdropFilter: 'blur(4px)'
-          }}
+          className="mv-sidebar-backdrop"
         />
       )}
 
       {/* Left Sidebar */}
-      <aside
-        style={{
-          width: '260px',
-          backgroundColor: 'var(--surface)',
-          borderRight: '1px solid var(--border)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          zIndex: 45,
-          flexShrink: 0,
-          boxShadow: '1px 0 3px rgba(0,0,0,0.02)'
-        }}
-        className={mobileNavOpen ? 'mobile-drawer-open' : ''}
-      >
+      <aside className={`mv-sidebar ${mobileNavOpen ? 'mobile-drawer-open' : ''}`}>
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           {/* Masthead / Brand Logo */}
           <div
@@ -310,45 +288,21 @@ export function Layout() {
       </aside>
 
       {/* Main Content Area */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <div className="mv-main-layout">
         {/* Top Header Bar */}
-        <header
-          style={{
-            height: '62px',
-            backgroundColor: 'rgba(255, 255, 255, 0.94)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            borderBottom: '1px solid var(--border)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 28px',
-            position: 'sticky',
-            top: 0,
-            zIndex: 30,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
-          }}
-        >
+        <header className="mv-topbar">
           {/* Left Title & Mobile Menu */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
             <button
               onClick={() => setMobileNavOpen((prev) => !prev)}
               type="button"
               className="mv-mobile-toggle"
-              style={{
-                padding: '6px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border)',
-                background: 'none',
-                cursor: 'pointer',
-                color: 'var(--ink)'
-              }}
               aria-label="Toggle navigation"
             >
               <Menu size={18} />
             </button>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
               <div
                 style={{
                   width: '30px',
@@ -359,7 +313,8 @@ export function Layout() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'var(--accent)'
+                  color: 'var(--accent)',
+                  flexShrink: 0
                 }}
               >
                 <CurrentIcon size={16} strokeWidth={2.4} />
@@ -369,7 +324,10 @@ export function Layout() {
                   fontSize: 'var(--text-base)',
                   fontWeight: 700,
                   color: 'var(--ink)',
-                  letterSpacing: '-0.02em'
+                  letterSpacing: '-0.02em',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
                 }}
               >
                 {currentNav.label}
@@ -378,16 +336,16 @@ export function Layout() {
           </div>
 
           {/* Right Header Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* Quick Upload Pill Button */}
-            <Link to="/upload" style={{ textDecoration: 'none' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            {/* Quick Upload Pill Button (Hidden on Mobile) */}
+            <Link to="/upload" className="mv-hide-mobile" style={{ textDecoration: 'none' }}>
               <button
                 type="button"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '7px',
-                  padding: '8px 18px',
+                  padding: '8px 16px',
                   borderRadius: 'var(--radius-pill)',
                   background: 'linear-gradient(135deg, #065F46 0%, #047857 100%)',
                   color: '#FFFFFF',
@@ -408,7 +366,7 @@ export function Layout() {
                 }}
               >
                 <UploadCloud size={15} strokeWidth={2.2} />
-                <span>Upload Report</span>
+                <span>Upload</span>
               </button>
             </Link>
 
@@ -418,8 +376,8 @@ export function Layout() {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
-                padding: '7px 14px',
+                gap: '5px',
+                padding: '6px 10px',
                 borderRadius: 'var(--radius-pill)',
                 backgroundColor: 'var(--surface)',
                 border: '1px solid var(--border)',
@@ -435,7 +393,7 @@ export function Layout() {
               title="Change Language / भाषा बदलें"
             >
               <Globe size={14} color="var(--accent)" />
-              <span>{currentLangObj.native}</span>
+              <span className="mv-hide-xs">{currentLangObj.native}</span>
               <ChevronDown size={12} color="var(--ink-muted)" />
             </button>
 
@@ -445,7 +403,7 @@ export function Layout() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '4px 12px 4px 6px',
+                padding: '4px 8px 4px 4px',
                 borderRadius: 'var(--radius-pill)',
                 backgroundColor: 'var(--surface)',
                 border: '1px solid var(--border)',
@@ -469,7 +427,7 @@ export function Layout() {
               >
                 {userInitial}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div className="mv-hide-mobile" style={{ display: 'flex', flexDirection: 'column' }}>
                 <span
                   style={{
                     fontSize: 'var(--text-xs)',
@@ -489,30 +447,12 @@ export function Layout() {
         </header>
 
         {/* Content Body */}
-        <main
-          style={{
-            flex: 1,
-            padding: '28px 28px 64px',
-            maxWidth: '1280px',
-            width: '100%',
-            margin: '0 auto'
-          }}
-        >
+        <main className="mv-content-container">
           <Outlet />
         </main>
 
         {/* Discreet Medical Site Footer */}
-        <footer
-          style={{
-            borderTop: '1px solid var(--border)',
-            backgroundColor: 'var(--surface)',
-            padding: '18px 28px',
-            fontSize: 'var(--text-xs)',
-            color: 'var(--ink-muted)',
-            textAlign: 'center',
-            lineHeight: 1.5
-          }}
-        >
+        <footer className="mv-footer">
           <p style={{ margin: 0 }}>
             <strong style={{ color: '#064E3B' }}>MediVault</strong> · Personal Longitudinal Health Records & Physiological Ledger · Non-Diagnostic Educational Platform
           </p>

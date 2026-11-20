@@ -41,16 +41,22 @@ export function DashboardPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [docsRes, trendsRes, timelineRes] = await Promise.all([
+        const [docsRes, trendsRes, timelineRes] = await Promise.allSettled([
           api.get('/api/v1/documents?limit=6'),
           api.get('/api/v1/analytics/lab-trends'),
           api.get('/api/v1/timeline?limit=6')
         ]);
-        if (docsRes.success) setDocuments(docsRes.data.documents || []);
-        if (trendsRes.success) setTrends(trendsRes.data.trends || []);
-        if (timelineRes.success) setTimelineEvents(timelineRes.data.events || []);
-      } catch (err) {
-        console.error('Error loading ledger data:', err);
+        if (docsRes.status === 'fulfilled' && docsRes.value?.success) {
+          setDocuments(docsRes.value.data.documents || []);
+        }
+        if (trendsRes.status === 'fulfilled' && trendsRes.value?.success) {
+          setTrends(trendsRes.value.data.trends || []);
+        }
+        if (timelineRes.status === 'fulfilled' && timelineRes.value?.success) {
+          setTimelineEvents(timelineRes.value.data.events || []);
+        }
+      } catch {
+        // Silently maintain stable offline/fallback state
       } finally {
         setLoading(false);
       }
@@ -642,7 +648,7 @@ export function DashboardPage() {
       </div>
 
       {/* Ingestion History & Longitudinal Encounters Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
         {/* Uploads Ledger */}
         <Card>
           <CardHeader>

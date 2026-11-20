@@ -37,7 +37,7 @@ export async function apiRequest(endpoint, options = {}, isRetry = false) {
   });
 
   // Attempt automatic session refresh on 401 if not already refreshing and not auth routes
-  if (response.status === 401 && !isRetry && !endpoint.includes('/api/v1/auth/login') && !endpoint.includes('/api/v1/auth/refresh')) {
+  if (response.status === 401 && !isRetry && !endpoint.includes('/api/v1/auth/login') && !endpoint.includes('/api/v1/auth/refresh') && !endpoint.includes('/api/v1/auth/me')) {
     if (!isRefreshing) {
       isRefreshing = true;
       try {
