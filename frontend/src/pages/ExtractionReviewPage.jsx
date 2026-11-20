@@ -49,6 +49,18 @@ export function ExtractionReviewPage() {
     };
   }, [id, pollingCount]);
 
+  const handleRescan = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.post(`/api/v1/documents/${id}/reprocess`);
+      setPollingCount(0);
+      setTimeout(() => fetchExtractions(), 1200);
+    } catch {
+      fetchExtractions();
+    }
+  };
+
   const handleVerify = async (extractionId) => {
     try {
       await api.post(`/api/v1/extractions/${extractionId}/verify`);
@@ -179,14 +191,22 @@ export function ExtractionReviewPage() {
           </div>
 
           <Button
-            variant="primary"
+            variant={pendingCount === 0 ? 'secondary' : 'primary'}
             size="sm"
             icon={Check}
             onClick={handleVerifyAll}
-            disabled={extractions.length === 0}
+            disabled={extractions.length === 0 || pendingCount === 0}
           >
-            Verify All ({extractions.length})
+            {pendingCount === 0 ? 'All Verified ✓' : `Verify All (${pendingCount})`}
           </Button>
+
+          {pendingCount === 0 && (
+            <Link to="/analytics" style={{ textDecoration: 'none' }}>
+              <Button variant="primary" size="sm">
+                View Trends →
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -207,7 +227,7 @@ export function ExtractionReviewPage() {
             variant="ghost"
             size="sm"
             icon={RefreshCw}
-            onClick={fetchExtractions}
+            onClick={handleRescan}
           >
             Re-scan
           </Button>
@@ -221,7 +241,7 @@ export function ExtractionReviewPage() {
                 title="No Structured Measurements Found"
                 description="The optical parsing queue may still be processing high-resolution scans. Click re-scan to refresh."
                 action={
-                  <Button variant="secondary" size="sm" icon={RefreshCw} onClick={fetchExtractions}>
+                  <Button variant="secondary" size="sm" icon={RefreshCw} onClick={handleRescan}>
                     Check Ingestion Status
                   </Button>
                 }

@@ -103,8 +103,15 @@ export function DocumentsPage() {
               </TableHeader>
               <TableBody>
                 {filtered.map((doc) => {
-                  const extractedCount = doc.extractedRecords?.length || 0;
-                  const isReady = doc.status === 'COMPLETED' || doc.status === 'READY' || extractedCount > 0;
+                  const extractedCount = doc._count?.extractedRecords ?? doc.extractedRecords?.length ?? 0;
+                  const status = doc.processingStatus || doc.status;
+                  const isReady = status === 'COMPLETED' || status === 'REVIEW_REQUIRED' || extractedCount > 0;
+                  const isProcessing = status === 'PROCESSING';
+                  const isFailed = status === 'FAILED';
+                  const sizeBytes = doc.fileSize || doc.fileSizeBytes || 0;
+                  const sizeFormatted = sizeBytes > 1024 * 1024
+                    ? `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`
+                    : `${(sizeBytes / 1024).toFixed(0)} KB`;
 
                   return (
                     <TableRow key={doc.id}>
@@ -116,7 +123,7 @@ export function DocumentsPage() {
                               {doc.originalFilename}
                             </Link>
                             <div style={{ fontSize: 'var(--text-2xs)', color: 'var(--ink-muted)' }}>
-                              {doc.mimeType || 'application/pdf'} · {((doc.fileSizeBytes || 1024) / 1024).toFixed(1)} KB
+                              {doc.mimeType || 'application/pdf'} · {sizeFormatted}
                             </div>
                           </div>
                         </div>
@@ -141,8 +148,12 @@ export function DocumentsPage() {
                       </TableCell>
 
                       <TableCell>
-                        <Badge variant={isReady ? 'normal' : 'borderline'} size="sm" dot>
-                          {isReady ? 'Processed' : 'Queued'}
+                        <Badge
+                          variant={isReady ? 'normal' : isFailed ? 'critical' : 'borderline'}
+                          size="sm"
+                          dot
+                        >
+                          {isReady ? 'Processed' : isFailed ? 'Failed' : isProcessing ? 'Processing' : 'Queued'}
                         </Badge>
                       </TableCell>
 

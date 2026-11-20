@@ -11,6 +11,7 @@ import {
   getDocumentExtractions,
   verifyAllDocumentExtractions
 } from '../services/extractionReviewService.js';
+import { enqueueDocumentJob } from '../queue/documentQueue.js';
 import { storageService } from '../services/storageService.js';
 import { ValidationError } from '../utils/errors.js';
 
@@ -145,6 +146,23 @@ router.get('/:id/status', async (req, res, next) => {
         pageCount: document.pageCount,
         latestJob: document.processingJobs[0] || null
       }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Trigger re-processing / re-scan of document
+router.post('/:id/reprocess', async (req, res, next) => {
+  try {
+    const document = await getDocumentById(req.user.userId, req.params.id);
+    await enqueueDocumentJob(document.id, {
+      originalFilename: document.originalFilename,
+      fileSize: document.fileSize
+    });
+    res.status(200).json({
+      success: true,
+      message: 'Document re-enqueued for processing'
     });
   } catch (err) {
     next(err);

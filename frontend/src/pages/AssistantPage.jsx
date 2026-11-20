@@ -85,7 +85,7 @@ export function AssistantPage() {
     setMessages(prev => [...prev, tempUserMsg]);
 
     try {
-      const res = await api.post(`/api/v1/chat/sessions/${currentSessionId}/messages`, { query: q });
+      const res = await api.post(`/api/v1/chat/sessions/${currentSessionId}/messages`, { content: q, query: q });
       if (res.success && res.data) {
         const assistantMsg = {
           id: res.data.message?.id || `msg-${Date.now()}`,

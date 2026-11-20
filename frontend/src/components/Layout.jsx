@@ -85,9 +85,27 @@ export function Layout() {
               justifyContent: 'space-between'
             }}
           >
-            <Link to="/dashboard" style={{ textDecoration: 'none' }}>
+            <Link to="/dashboard" onClick={() => setMobileNavOpen(false)} style={{ textDecoration: 'none' }}>
               <BrandLogo size="md" />
             </Link>
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(false)}
+              className="mv-mobile-toggle"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '6px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                cursor: 'pointer'
+              }}
+              aria-label="Close navigation menu"
+            >
+              <X size={18} color="var(--ink)" />
+            </button>
           </div>
 
           {/* Biomarker Guide Pill Action */}

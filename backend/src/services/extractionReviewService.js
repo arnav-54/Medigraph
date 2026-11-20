@@ -226,13 +226,18 @@ export async function verifyAllDocumentExtractions(userId, documentId, ipAddress
     throw new NotFoundError('Document not found or access denied');
   }
 
+  const records = await prisma.extractedRecord.findMany({
+    where: { documentId, userId }
+  });
+  const recordIds = records.map(r => r.id);
+
   await prisma.$transaction([
     prisma.extractedRecord.updateMany({
       where: { documentId, userId },
       data: { verificationStatus: 'VERIFIED' }
     }),
     prisma.labResult.updateMany({
-      where: { userId, extractedRecord: { documentId } },
+      where: { userId, extractedRecordId: { in: recordIds } },
       data: { verificationStatus: 'VERIFIED' }
     }),
     prisma.document.update({
@@ -250,6 +255,6 @@ export async function verifyAllDocumentExtractions(userId, documentId, ipAddress
     userAgent
   });
 
-  return { success: true, message: 'All extracted records verified' };
+  return { success: true, count: records.length, message: `All ${records.length} extracted records verified` };
 }
 

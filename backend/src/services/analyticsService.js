@@ -179,7 +179,9 @@ export async function getLabTestTrend(userId, { testIdentifier, unit = null, onl
   const disclaimer = 'Trends and statistical comparisons are deterministic reflections of uploaded reports and do NOT constitute a medical diagnosis or clinical interpretation. Always consult a licensed healthcare professional.';
 
   return {
-    testName: results[0].labTest?.canonicalName || results[0].testNameRaw,
+    testName: results[0].testNameRaw || results[0].labTest?.canonicalName,
+    rawName: results[0].testNameRaw,
+    canonicalName: results[0].labTest?.canonicalName,
     category: results[0].labTest?.category || 'General',
     unit: targetUnit,
     availableUnits: Array.from(unitGroups.keys()),

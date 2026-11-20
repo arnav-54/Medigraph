@@ -212,6 +212,27 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* Extra small screen optimizations (320px - 400px, e.g. Galaxy A55) */
+@media (max-width: 420px) {
+  .mv-topbar {
+    padding: 0 10px;
+    height: 52px;
+  }
+
+  .mv-topbar button {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+  }
+
+  .mv-content-container {
+    padding: 12px 8px 36px !important;
+  }
+
+  .mv-card {
+    padding: 12px !important;
+  }
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; }

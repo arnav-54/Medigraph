@@ -47,6 +47,10 @@ export function isMongoConnected() {
   return isConnected && db !== null;
 }
 
+export function getDb() {
+  return db;
+}
+
 export async function disconnectMongo() {
   if (client) {
     await client.close();
@@ -180,7 +184,15 @@ export const mongoDb = {
       }
       return res;
     },
-    findMany: async ({ where, skip = 0, take = 50 }) => {
+    count: async ({ where } = {}) => {
+      if (!db) return 0;
+      const query = {};
+      if (where?.userId) query.userId = where.userId;
+      if (where?.deletedAt === null) query.deletedAt = null;
+      if (where?.processingStatus) query.processingStatus = where.processingStatus;
+      return db.collection('documents').countDocuments(query);
+    },
+    findMany: async ({ where, skip = 0, take = 50, include }) => {
       if (!db) return [];
       const query = {};
       if (where?.userId) query.userId = where.userId;
@@ -197,13 +209,21 @@ export const mongoDb = {
       return Promise.all(docs.map(async (d) => {
         const extractedCount = await db.collection('extractedRecords').countDocuments({ documentId: d.id });
         const pagesCount = await db.collection('documentPages').countDocuments({ documentId: d.id });
-        return {
+        const res = {
           ...d,
           _count: {
             extractedRecords: extractedCount,
             pages: pagesCount
           }
         };
+        if (include?.extractedRecords) {
+          const recs = await db.collection('extractedRecords').find({ documentId: d.id }, { projection: { _id: 0 } }).toArray();
+          res.extractedRecords = await Promise.all(recs.map(async (er) => {
+            const lrs = await db.collection('labResults').find({ extractedRecordId: er.id }, { projection: { _id: 0 } }).toArray();
+            return { ...er, labResults: lrs };
+          }));
+        }
+        return res;
       }));
     },
     create: async ({ data }) => {
@@ -224,6 +244,14 @@ export const mongoDb = {
         { $set: { ...data, updatedAt: new Date().toISOString() } }
       );
       return db.collection('documents').findOne({ id: where.id }, { projection: { _id: 0 } });
+    },
+    count: async ({ where } = {}) => {
+      if (!db) return 0;
+      const query = {};
+      if (where?.userId) query.userId = where.userId;
+      if (where?.deletedAt === null) query.deletedAt = null;
+      if (where?.processingStatus) query.processingStatus = where.processingStatus;
+      return db.collection('documents').countDocuments(query);
     },
     deleteMany: async ({ where }) => {
       if (!db) return { count: 0 };
@@ -311,6 +339,15 @@ export const mongoDb = {
       );
       return db.collection('extractedRecords').findOne({ id: where.id }, { projection: { _id: 0 } });
     },
+    updateMany: async ({ where, data }) => {
+      if (!db) return { count: 0 };
+      const query = {};
+      if (where?.documentId) query.documentId = where.documentId;
+      if (where?.userId) query.userId = where.userId;
+      if (where?.id) query.id = typeof where.id === 'object' && where.id.in ? { $in: where.id.in } : where.id;
+      const res = await db.collection('extractedRecords').updateMany(query, { $set: data });
+      return { count: res.modifiedCount };
+    },
     deleteMany: async ({ where }) => {
       if (!db) return { count: 0 };
       const res = await db.collection('extractedRecords').deleteMany(where || {});
@@ -368,17 +405,35 @@ export const mongoDb = {
       }
       return res;
     },
-    findMany: async ({ where, include, orderBy }) => {
+    findMany: async ({ where, include, orderBy, take }) => {
       if (!db) return [];
       let query = {};
       if (where?.userId) query.userId = where.userId;
       if (where?.isAbnormalFlag !== undefined) query.isAbnormalFlag = where.isAbnormalFlag;
+      if (where?.isCriticalFlag !== undefined) query.isCriticalFlag = where.isCriticalFlag;
+      if (where?.verificationStatus) query.verificationStatus = where.verificationStatus;
       if (where?.labTestId) query.labTestId = where.labTestId;
 
-      // Support OR queries e.g. { OR: [ { labTestId }, { testNameRaw }, { labTest: { canonicalName } } ] }
+      // Handle extractedRecord filter (e.g., extractedRecord: { documentId: event.documentId })
+      if (where?.extractedRecord?.documentId) {
+        const matchingRecs = await db.collection('extractedRecords')
+          .find({ documentId: where.extractedRecord.documentId }, { projection: { id: 1 } })
+          .toArray();
+        query.extractedRecordId = { $in: matchingRecs.map(r => r.id) };
+      } else if (where?.extractedRecordId) {
+        query.extractedRecordId = where.extractedRecordId;
+      }
+
+      // Support OR queries e.g. { OR: [ { labTestId }, { testNameRaw }, { isAbnormalFlag: true }, { isCriticalFlag: true } ] }
       if (where?.OR && Array.isArray(where.OR)) {
         const orConditions = [];
         for (const cond of where.OR) {
+          if (cond.isAbnormalFlag !== undefined) {
+            orConditions.push({ isAbnormalFlag: cond.isAbnormalFlag });
+          }
+          if (cond.isCriticalFlag !== undefined) {
+            orConditions.push({ isCriticalFlag: cond.isCriticalFlag });
+          }
           if (cond.labTestId) {
             orConditions.push({ labTestId: cond.labTestId });
           }
@@ -406,10 +461,15 @@ export const mongoDb = {
       }
 
       const sortOpt = orderBy?.testDate === 'desc' ? { testDate: -1 } : { testDate: 1 };
-      let results = await db.collection('labResults')
+      let cursor = db.collection('labResults')
         .find(query, { projection: { _id: 0 } })
-        .sort(sortOpt)
-        .toArray();
+        .sort(sortOpt);
+
+      if (take && typeof take === 'number') {
+        cursor = cursor.limit(take);
+      }
+
+      let results = await cursor.toArray();
 
       if (include?.extractedRecord) {
         results = await Promise.all(results.map(async (r) => {
@@ -431,6 +491,22 @@ export const mongoDb = {
       }
 
       return results;
+    },
+    updateMany: async ({ where, data }) => {
+      if (!db) return { count: 0 };
+      const query = {};
+      if (where?.userId) query.userId = where.userId;
+      if (where?.extractedRecordId) {
+        query.extractedRecordId = typeof where.extractedRecordId === 'object' && where.extractedRecordId.in
+          ? { $in: where.extractedRecordId.in }
+          : where.extractedRecordId;
+      }
+      if (where?.extractedRecord?.documentId) {
+        const records = await db.collection('extractedRecords').find({ documentId: where.extractedRecord.documentId }).toArray();
+        query.extractedRecordId = { $in: records.map(r => r.id) };
+      }
+      const res = await db.collection('labResults').updateMany(query, { $set: data });
+      return { count: res.modifiedCount };
     },
     deleteMany: async ({ where }) => {
       if (!db) return { count: 0 };
@@ -459,6 +535,23 @@ export const mongoDb = {
       const lt = { id: data.id || uuidv4(), ...data };
       await db.collection('labTests').insertOne({ ...lt });
       return lt;
+    },
+    upsert: async ({ where, update = {}, create = {} }) => {
+      if (!db) return null;
+      const query = {};
+      if (where?.id) query.id = where.id;
+      if (where?.canonicalName) query.canonicalName = where.canonicalName;
+      const existing = await db.collection('labTests').findOne(query, { projection: { _id: 0 } });
+      if (existing) {
+        if (update && Object.keys(update).length > 0) {
+          await db.collection('labTests').updateOne(query, { $set: update });
+          return { ...existing, ...update };
+        }
+        return existing;
+      }
+      const newLt = { id: create.id || uuidv4(), ...create };
+      await db.collection('labTests').insertOne({ ...newLt });
+      return newLt;
     }
   },
 
@@ -467,6 +560,11 @@ export const mongoDb = {
       const page = { id: data.id || uuidv4(), ...data, createdAt: new Date().toISOString() };
       await db.collection('documentPages').insertOne({ ...page });
       return page;
+    },
+    deleteMany: async ({ where } = {}) => {
+      if (!db) return { count: 0 };
+      const res = await db.collection('documentPages').deleteMany(where || {});
+      return { count: res.deletedCount };
     },
     findMany: async ({ where }) => {
       if (!db) return [];
@@ -482,7 +580,13 @@ export const mongoDb = {
     },
     update: async ({ where, data }) => {
       if (!db) return null;
-      await db.collection('processingJobs').updateOne({ id: where.id }, { $set: { ...data, updatedAt: new Date().toISOString() } });
+      const updateDoc = { ...data, updatedAt: new Date().toISOString() };
+      const mongoUpdate = { $set: updateDoc };
+      if (data.attempts && typeof data.attempts === 'object' && data.attempts.increment) {
+        delete updateDoc.attempts;
+        mongoUpdate.$inc = { attempts: data.attempts.increment };
+      }
+      await db.collection('processingJobs').updateOne({ id: where.id }, mongoUpdate);
       return db.collection('processingJobs').findOne({ id: where.id }, { projection: { _id: 0 } });
     },
     findFirst: async ({ where }) => {
@@ -501,18 +605,40 @@ export const mongoDb = {
       await db.collection('medicalEvents').insertOne({ ...evt });
       return evt;
     },
-    findMany: async ({ where, orderBy }) => {
-      if (!db) return [];
+    count: async ({ where } = {}) => {
+      if (!db) return 0;
       const query = {};
       if (where?.userId) query.userId = where.userId;
       if (where?.eventDate?.gte) query.eventDate = { $gte: new Date(where.eventDate.gte).toISOString() };
       if (where?.eventDate?.lte) query.eventDate = { ...query.eventDate, $lte: new Date(where.eventDate.lte).toISOString() };
+      return db.collection('medicalEvents').countDocuments(query);
+    },
+    findMany: async ({ where, orderBy, skip = 0, take = 50, include } = {}) => {
+      if (!db) return [];
+      const query = {};
+      if (where?.userId) query.userId = where.userId;
+      if (where?.eventType) query.eventType = where.eventType;
+      if (where?.eventDate?.gte) query.eventDate = { $gte: new Date(where.eventDate.gte).toISOString() };
+      if (where?.eventDate?.lte) query.eventDate = { ...query.eventDate, $lte: new Date(where.eventDate.lte).toISOString() };
 
       const sortOpt = orderBy?.eventDate === 'desc' ? { eventDate: -1 } : { eventDate: 1 };
-      return db.collection('medicalEvents')
+      const events = await db.collection('medicalEvents')
         .find(query, { projection: { _id: 0 } })
         .sort(sortOpt)
+        .skip(skip)
+        .limit(take)
         .toArray();
+
+      if (include?.document) {
+        return Promise.all(events.map(async (ev) => {
+          const doc = ev.documentId
+            ? await db.collection('documents').findOne({ id: ev.documentId }, { projection: { _id: 0 } })
+            : null;
+          return { ...ev, document: doc };
+        }));
+      }
+
+      return events;
     }
   },
 

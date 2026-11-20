@@ -9,7 +9,7 @@ import {
   CartesianGrid,
   Legend
 } from 'recharts';
-import { LineChart as ChartIcon, BookOpen, ArrowUpRight, ArrowDownRight, Minus, AlertTriangle, Layers, Filter } from 'lucide-react';
+import { LineChart as ChartIcon, BookOpen, ArrowUpRight, ArrowDownRight, Minus, AlertTriangle, Layers, Filter, CheckCircle2 } from 'lucide-react';
 import { api } from '../api/client.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { BiomarkerDictionaryModal } from '../components/BiomarkerDictionaryModal.jsx';
@@ -391,36 +391,64 @@ export function AnalyticsPage() {
               </div>
             </div>
           ) : (
-            <div style={{ width: '100%', height: 320 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-subtle)" />
-                  <XAxis
-                    dataKey="testDate"
-                    stroke="var(--ink-muted)"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={{ stroke: 'var(--border)' }}
-                  />
-                  <YAxis
-                    stroke="var(--ink-muted)"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={{ stroke: 'var(--border)' }}
-                    domain={['auto', 'auto']}
-                  />
-                  <Tooltip content={<CustomChartTooltip />} />
-                  <Legend verticalAlign="top" height={36} iconType="circle" iconSize={8} />
+            <div>
+              {chartData.length === 1 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 16px',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'var(--accent-subtle)',
+                    border: '1px solid var(--accent-border)',
+                    marginBottom: '16px',
+                    flexWrap: 'wrap',
+                    gap: '10px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <CheckCircle2 size={16} color="var(--accent)" />
+                    <span style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--accent-ink)' }}>
+                      Initial Baseline Reading Recorded: {chartData[0].value} {chartData[0].unit} ({chartData[0].testDate})
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-secondary)' }}>
+                    Continuous longitudinal trajectory curves plot automatically once 2 or more reports are uploaded.
+                  </span>
+                </div>
+              )}
 
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    name={trendData?.testName || 'Primary'}
-                    stroke="var(--accent)"
-                    strokeWidth={2.5}
-                    dot={{ fill: 'var(--accent)', r: 4, strokeWidth: 2, stroke: 'var(--surface)' }}
-                    activeDot={{ r: 6 }}
-                  />
+              <div style={{ width: '100%', height: 320 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-subtle)" />
+                    <XAxis
+                      dataKey="testDate"
+                      stroke="var(--ink-muted)"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={{ stroke: 'var(--border)' }}
+                    />
+                    <YAxis
+                      stroke="var(--ink-muted)"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={{ stroke: 'var(--border)' }}
+                      domain={chartData.length === 1 ? [(dataMin) => Math.max(0, Math.floor(dataMin * 0.8)), (dataMax) => Math.ceil(dataMax * 1.2)] : ['auto', 'auto']}
+                    />
+                    <Tooltip content={<CustomChartTooltip />} />
+                    <Legend verticalAlign="top" height={36} iconType="circle" iconSize={8} />
+
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      name={trendData?.testName || 'Primary Biomarker'}
+                      stroke="var(--accent)"
+                      strokeWidth={2.5}
+                      dot={{ fill: 'var(--accent)', r: 6, strokeWidth: 2, stroke: 'var(--surface)' }}
+                      activeDot={{ r: 8 }}
+                    />
 
                   {enableCompare && compareTrendData && (
                     <Line
@@ -437,6 +465,7 @@ export function AnalyticsPage() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
+          </div>
           )}
         </CardContent>
       </Card>

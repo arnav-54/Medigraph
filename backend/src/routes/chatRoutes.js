@@ -9,7 +9,10 @@ const router = express.Router();
 router.use(authenticate);
 
 const messageSchema = z.object({
-  content: z.string().min(1, 'Question content is required').max(1000)
+  content: z.string().max(1000).optional(),
+  query: z.string().max(1000).optional()
+}).refine((data) => Boolean((data.content && data.content.trim()) || (data.query && data.query.trim())), {
+  message: 'Question content or query is required'
 });
 
 // POST /api/v1/chat/sessions
@@ -94,17 +97,19 @@ router.post('/sessions/:id/messages', async (req, res, next) => {
       throw new NotFoundError('Chat session not found or access denied');
     }
 
+    const queryText = (parsed.data.content || parsed.data.query).trim();
+
     // Save user question message
     await prisma.chatMessage.create({
       data: {
         sessionId: session.id,
         sender: 'USER',
-        content: parsed.data.content
+        content: queryText
       }
     });
 
     // Execute grounded RAG assistant query
-    const ragResult = await queryMedicalAssistant(req.user.userId, parsed.data.content);
+    const ragResult = await queryMedicalAssistant(req.user.userId, queryText);
 
     // Save assistant response message with citations
     const assistantMessage = await prisma.chatMessage.create({

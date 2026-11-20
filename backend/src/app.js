@@ -78,6 +78,9 @@ export function createApp() {
     });
   });
 
+  // Favicon ignore handler
+  app.get('/favicon.ico', (req, res) => res.status(204).end());
+
   // Base API Info
   app.get('/api/v1', (req, res) => {
     res.status(200).json({

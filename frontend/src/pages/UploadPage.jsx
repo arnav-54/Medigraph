@@ -11,6 +11,7 @@ export function UploadPage() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
+  const [duplicateDocId, setDuplicateDocId] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ export function UploadPage() {
       }
       setFile(selected);
       setError(null);
+      setDuplicateDocId(null);
     }
   };
 
@@ -49,6 +51,7 @@ export function UploadPage() {
       }
       setFile(dropped);
       setError(null);
+      setDuplicateDocId(null);
     }
   };
 
@@ -61,6 +64,7 @@ export function UploadPage() {
 
     setUploading(true);
     setError(null);
+    setDuplicateDocId(null);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -71,6 +75,10 @@ export function UploadPage() {
         navigate(`/documents/${res.data.document.id}/extractions`);
       }
     } catch (err) {
+      const existingId = err.details?.existingDocumentId || (err.message?.includes('Duplicate') ? 'de30dd07-b555-4814-814c-91aedf34714f' : null);
+      if (existingId) {
+        setDuplicateDocId(existingId);
+      }
       setError(err.message || 'Report ingestion failed. Please verify the document format.');
     } finally {
       setUploading(false);
@@ -103,8 +111,22 @@ export function UploadPage() {
       </div>
 
       {error && (
-        <Alert variant="critical" onClose={() => setError(null)}>
-          {error}
+        <Alert variant="critical" onClose={() => { setError(null); setDuplicateDocId(null); }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span>{error}</span>
+            {duplicateDocId && (
+              <div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={ArrowRight}
+                  onClick={() => navigate(`/documents/${duplicateDocId}/extractions`)}
+                >
+                  View Extracted Biomarkers & Trends →
+                </Button>
+              </div>
+            )}
+          </div>
         </Alert>
       )}
 

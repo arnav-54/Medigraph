@@ -37,13 +37,15 @@ export async function uploadDocument({
     }
   });
 
-  if (existingDoc && !existingDoc.deletedAt) {
+  if (existingDoc && !existingDoc.deletedAt && existingDoc.processingStatus !== 'FAILED') {
     const uploadedDateStr = existingDoc.uploadedAt
       ? (existingDoc.uploadedAt instanceof Date ? existingDoc.uploadedAt.toISOString().slice(0, 10) : new Date(existingDoc.uploadedAt).toISOString().slice(0, 10))
       : 'earlier';
-    throw new ConflictError(
+    const conflictErr = new ConflictError(
       `Duplicate document detected: "${originalFilename}" matches an existing report uploaded on ${uploadedDateStr}. You can view it directly in your Document Library.`
     );
+    conflictErr.details = { existingDocumentId: existingDoc.id };
+    throw conflictErr;
   }
 
   const documentId = uuidv4();

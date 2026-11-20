@@ -49,7 +49,7 @@ export async function generateMedicalSummary(userId, options = {}) {
     uploadedAt: new Date(d.uploadedAt || Date.now()).toISOString().slice(0, 10)
   }));
 
-  const allLabResults = documents.flatMap(d =>
+  let allLabResults = documents.flatMap(d =>
     (d.extractedRecords || []).flatMap(er =>
       (er.labResults || []).map(lr => ({
         ...lr,
@@ -59,6 +59,28 @@ export async function generateMedicalSummary(userId, options = {}) {
       }))
     )
   );
+
+  // Fallback to direct query on labResults if relation hydration was bypassed
+  if (allLabResults.length === 0) {
+    const directResults = await prisma.labResult.findMany({
+      where: { userId },
+      include: {
+        extractedRecord: {
+          include: {
+            document: true
+          }
+        }
+      },
+      orderBy: { testDate: 'desc' }
+    });
+
+    allLabResults = directResults.map(r => ({
+      ...r,
+      documentId: r.extractedRecord?.documentId || consultedDocs[0]?.id,
+      filename: r.extractedRecord?.document?.originalFilename || consultedDocs[0]?.filename || 'Diagnostic Report',
+      pageNumber: r.extractedRecord?.pageNumber || 1
+    }));
+  }
 
   const abnormalFindings = allLabResults.filter(r => r.isAbnormalFlag);
   const normalFindings = allLabResults.filter(r => !r.isAbnormalFlag);
