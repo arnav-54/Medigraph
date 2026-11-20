@@ -323,12 +323,72 @@ export function AnalyticsPage() {
 
         <CardContent style={{ padding: '24px 20px 12px' }}>
           {chartData.length === 0 ? (
-            <div style={{ padding: '40px 0' }}>
-              <EmptyState
-                icon={ChartIcon}
-                title="Insufficient Data Points"
-                description="At least 2 measurements with compatible units are required to construct a trajectory line."
-              />
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 18px',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'var(--accent-subtle)',
+                  border: '1px solid var(--accent-border)',
+                  marginBottom: '16px',
+                  flexWrap: 'wrap',
+                  gap: '10px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#065F46' }} />
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#065F46' }}>
+                    Simulated Reference Trajectory (Fasting Blood Glucose across 2 Years)
+                  </span>
+                </div>
+                <span style={{ fontSize: '12px', color: 'var(--ink-secondary)' }}>
+                  Upload your report to replace with personal curves
+                </span>
+              </div>
+
+              {/* Sample simulated chart so user sees the real power */}
+              <div style={{ width: '100%', height: 300 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={[
+                      { testDate: '15 Jan 2024', value: 98, unit: 'mg/dL' },
+                      { testDate: '10 Jul 2024', value: 104, unit: 'mg/dL' },
+                      { testDate: '18 Jan 2025', value: 110, unit: 'mg/dL' },
+                      { testDate: '15 Nov 2026', value: 118, unit: 'mg/dL' }
+                    ]}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-subtle)" />
+                    <XAxis
+                      dataKey="testDate"
+                      stroke="var(--ink-muted)"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={{ stroke: 'var(--border)' }}
+                    />
+                    <YAxis
+                      stroke="var(--ink-muted)"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={{ stroke: 'var(--border)' }}
+                      domain={[80, 140]}
+                    />
+                    <Tooltip content={<CustomChartTooltip />} />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      name="Fasting Blood Glucose (Sample)"
+                      stroke="#065F46"
+                      strokeWidth={3}
+                      dot={{ fill: '#065F46', r: 5, strokeWidth: 2, stroke: '#FFFFFF' }}
+                      activeDot={{ r: 7 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           ) : (
             <div style={{ width: '100%', height: 320 }}>
