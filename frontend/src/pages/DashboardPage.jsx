@@ -13,13 +13,20 @@ import {
   Calendar,
   AlertTriangle,
   ChevronRight,
-  FileText
+  FileText,
+  UploadCloud,
+  CheckCircle2,
+  Sparkles,
+  Shield,
+  Layers,
+  ArrowRight,
+  Info
 } from 'lucide-react';
 import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { BiomarkerDictionaryModal } from '../components/BiomarkerDictionaryModal.jsx';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge, Skeleton, SkeletonCard, EmptyState, Alert } from '../components/ui';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge, Skeleton, SkeletonCard } from '../components/ui/index.js';
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -56,7 +63,7 @@ export function DashboardPage() {
     setDictionaryOpen(true);
   };
 
-  const abnormalTests = trends.filter(item => {
+  const abnormalTests = trends.filter((item) => {
     const val = item.latestValue;
     if (val === null || val === undefined) return false;
     if (item.testName.includes('Cholesterol') && val > 200) return true;
@@ -66,13 +73,17 @@ export function DashboardPage() {
     return false;
   });
 
-  const vitalityScore = Math.max(68, 100 - (abnormalTests.length * 6));
+  const vitalityScore = Math.max(68, 100 - abnormalTests.length * 6);
+  const displayName = user?.fullName || (user?.email ? user.email.split('@')[0] : 'Patient Record');
+  const userInitial = displayName[0].toUpperCase();
+  const ageDisplay = user?.profile?.age || user?.age || '32';
+  const genderDisplay = user?.profile?.gender || user?.gender || 'Not specified';
 
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <SkeletonCard rows={2} />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
           <SkeletonCard rows={2} />
           <SkeletonCard rows={2} />
           <SkeletonCard rows={2} />
@@ -92,44 +103,175 @@ export function DashboardPage() {
       />
 
       {/* Patient Dossier Masthead */}
-      <Card>
-        <CardContent style={{ padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <Badge variant="accent" size="sm">Active Vault</Badge>
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>ID: {user?.id?.slice(0, 16) || 'usr-patient'}</span>
-              </div>
-              <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-                {user?.fullName || user?.email?.split('@')[0] || 'Patient Record'}
-              </h1>
-              <div style={{ display: 'flex', gap: '16px', marginTop: '6px', fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>
-                <span>Age: <strong>41 Y</strong></span>
-                <span>•</span>
-                <span>Sex: <strong>Female</strong></span>
-                <span>•</span>
-                <span>Reports Ingested: <strong>{documents.length}</strong></span>
-              </div>
+      <div
+        style={{
+          backgroundColor: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-xl)',
+          padding: '28px',
+          boxShadow: 'var(--shadow-md)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px' }}>
+          {/* Patient Identity */}
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: 'var(--radius-md)',
+                background: 'linear-gradient(135deg, #064E3B 0%, #065F46 100%)',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                fontWeight: 800,
+                boxShadow: '0 4px 14px rgba(6, 78, 59, 0.3)',
+                flexShrink: 0
+              }}
+            >
+              {userInitial}
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <Button variant="secondary" size="sm" icon={BookOpen} onClick={() => openDictionaryFor('')}>
-                Biomarker Guide
-              </Button>
-              <Link to="/upload">
-                <Button variant="primary" size="sm" icon={FileUp}>
-                  Upload Report
-                </Button>
-              </Link>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '3px 10px',
+                    borderRadius: '9999px',
+                    backgroundColor: 'var(--accent-subtle)',
+                    border: '1px solid var(--accent-border)',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: '#065F46'
+                  }}
+                >
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#059669' }} />
+                  Active Vault
+                </span>
+                <span style={{ fontSize: '11px', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)' }}>
+                  ID: {user?.id?.slice(0, 14) || 'usr-patient'}
+                </span>
+              </div>
+
+              <h1
+                style={{
+                  fontSize: '24px',
+                  fontWeight: 800,
+                  color: 'var(--ink)',
+                  letterSpacing: '-0.03em',
+                  lineHeight: 1.2,
+                  margin: 0
+                }}
+              >
+                {displayName}
+              </h1>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '6px', fontSize: '12px', color: 'var(--ink-secondary)', flexWrap: 'wrap' }}>
+                <span>Age: <strong style={{ color: 'var(--ink)' }}>{ageDisplay} Y</strong></span>
+                <span>•</span>
+                <span>Gender: <strong style={{ color: 'var(--ink)' }}>{genderDisplay}</strong></span>
+                <span>•</span>
+                <span>Ingested Reports: <strong style={{ color: '#065F46' }}>{documents.length}</strong></span>
+                <span>•</span>
+                <span>Email: <strong style={{ color: 'var(--ink)' }}>{user?.email || 'patient@medivault.ai'}</strong></span>
+              </div>
             </div>
           </div>
 
-          {/* Vitality Index Bar */}
-          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{
-                width: '36px',
-                height: '36px',
+          {/* Quick Actions (Pill Buttons) */}
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => openDictionaryFor('')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '7px',
+                padding: '9px 18px',
+                borderRadius: 'var(--radius-pill)',
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--border)',
+                color: 'var(--ink)',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                boxShadow: 'var(--shadow-xs)',
+                transition: 'all 150ms ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#065F46';
+                e.currentTarget.style.color = '#065F46';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.color = 'var(--ink)';
+                e.currentTarget.style.transform = 'none';
+              }}
+            >
+              <BookOpen size={15} color="#065F46" />
+              <span>Biomarker Guide</span>
+            </button>
+
+            <Link to="/upload" style={{ textDecoration: 'none' }}>
+              <button
+                type="button"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  padding: '9px 20px',
+                  borderRadius: 'var(--radius-pill)',
+                  background: 'linear-gradient(135deg, #065F46 0%, #047857 100%)',
+                  color: '#FFFFFF',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  border: '1px solid #064E3B',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(6, 95, 70, 0.35)',
+                  transition: 'all 150ms ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 6px 18px rgba(6, 95, 70, 0.45)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(6, 95, 70, 0.35)';
+                }}
+              >
+                <UploadCloud size={16} strokeWidth={2.2} />
+                <span>Upload Report</span>
+              </button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Telemetry Bar */}
+        <div
+          style={{
+            marginTop: '20px',
+            paddingTop: '16px',
+            borderTop: '1px solid var(--border-subtle)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '14px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div
+              style={{
+                width: '38px',
+                height: '38px',
                 borderRadius: 'var(--radius-sm)',
                 backgroundColor: abnormalTests.length === 0 ? 'var(--status-normal-bg)' : 'var(--status-borderline-bg)',
                 border: `1px solid ${abnormalTests.length === 0 ? 'var(--status-normal-border)' : 'var(--status-borderline-border)'}`,
@@ -137,36 +279,77 @@ export function DashboardPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 'var(--text-sm)',
-                fontWeight: 600
-              }}>
-                {vitalityScore}
-              </div>
-              <div>
-                <div style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--ink)' }}>
-                  Vitality Stability Index: {abnormalTests.length === 0 ? 'Good Control' : 'Attention Suggested'}
-                </div>
-                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>
-                  {abnormalTests.length} parameter(s) outside optimal laboratory reference interval
-                </div>
-              </div>
+                fontSize: '15px',
+                fontWeight: 800
+              }}
+            >
+              {vitalityScore}
             </div>
-
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Badge variant="neutral" size="sm">{trends.length} Tracked Biomarkers</Badge>
-              <Badge variant="neutral" size="sm">{timelineEvents.length} Clinical Visits</Badge>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
+                Vitality Stability Index: {abnormalTests.length === 0 ? 'Optimal Control' : 'Attention Suggested'}
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>
+                {abnormalTests.length === 0
+                  ? 'All measured biomarkers within physiological reference interval.'
+                  : `${abnormalTests.length} parameter(s) outside optimal laboratory reference interval.`}
+              </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Abnormal Values Banner if present */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <span
+              style={{
+                padding: '4px 10px',
+                borderRadius: '6px',
+                backgroundColor: 'var(--surface-sub)',
+                border: '1px solid var(--border)',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--ink-secondary)'
+              }}
+            >
+              {trends.length} Tracked Biomarkers
+            </span>
+            <span
+              style={{
+                padding: '4px 10px',
+                borderRadius: '6px',
+                backgroundColor: 'var(--surface-sub)',
+                border: '1px solid var(--border)',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--ink-secondary)'
+              }}
+            >
+              {timelineEvents.length} Clinical Visits
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Abnormal Values Warning Banner */}
       {abnormalTests.length > 0 && (
-        <Alert
-          variant="warning"
-          title="Elevated Biomarkers Detected"
-          action={
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+        <div
+          style={{
+            padding: '14px 18px',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'var(--status-borderline-bg)',
+            border: '1px solid var(--status-borderline-border)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px'
+          }}
+        >
+          <AlertTriangle size={18} color="var(--status-borderline-ink)" style={{ marginTop: '2px', flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--status-borderline-ink)' }}>
+              Elevated Biomarkers Detected
+            </div>
+            <p style={{ fontSize: '12px', color: 'var(--ink-secondary)', margin: '2px 0 8px', lineHeight: 1.5 }}>
+              Certain measurements exceed normal laboratory intervals. Review trajectories with your doctor.
+            </p>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {abnormalTests.map((item, idx) => (
                 <button
                   key={idx}
@@ -177,49 +360,222 @@ export function DashboardPage() {
                     borderRadius: 'var(--radius-xs)',
                     backgroundColor: 'var(--surface)',
                     border: '1px solid var(--status-borderline-border)',
-                    fontSize: 'var(--text-xs)',
+                    fontSize: '11px',
                     color: 'var(--status-borderline-ink)',
                     cursor: 'pointer',
-                    fontWeight: 500
+                    fontWeight: 600
                   }}
                 >
-                  {item.testName}: <strong>{item.latestValue} {item.unit}</strong> → Guide
+                  {item.testName}: {item.latestValue} {item.unit} → Guide
                 </button>
               ))}
             </div>
-          }
-        >
-          Certain observations exceed standard clinical ranges. Review trends with your physician.
-        </Alert>
+          </div>
+        </div>
       )}
 
-      {/* Biomarker Status Matrix Cards */}
+      {/* ── ONBOARDING SHOWCASE (When 0 documents uploaded) ── */}
+      {documents.length === 0 && (
+        <div
+          style={{
+            backgroundColor: 'var(--surface)',
+            border: '1.5px dashed var(--accent-border)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '28px',
+            boxShadow: 'var(--shadow-sm)'
+          }}
+        >
+          <div style={{ textAlign: 'center', maxWidth: '580px', margin: '0 auto 28px' }}>
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                backgroundColor: 'var(--accent-subtle)',
+                border: '1px solid var(--accent-border)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--accent)',
+                marginBottom: '12px'
+              }}
+            >
+              <UploadCloud size={24} />
+            </div>
+            <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--ink)', margin: 0, letterSpacing: '-0.02em' }}>
+              Welcome to your Health Ledger, {displayName}
+            </h2>
+            <p style={{ fontSize: '13px', color: 'var(--ink-secondary)', marginTop: '6px', lineHeight: 1.6 }}>
+              Upload your first diagnostic report to unlock automated OCR value extraction, multi-year trend curves, and citation-grounded AI consultation.
+            </p>
+          </div>
+
+          {/* 3 Step Onboarding Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+            <div
+              style={{
+                padding: '20px',
+                backgroundColor: 'var(--bg-canvas)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent)', backgroundColor: 'var(--surface)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--accent-border)' }}>
+                    STEP 1
+                  </span>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>Upload Lab PDF</span>
+                </div>
+                <p style={{ fontSize: '12px', color: 'var(--ink-muted)', lineHeight: 1.5, margin: '6px 0 16px' }}>
+                  Works with Dr Lal PathLabs, Thyrocare, SRL Diagnostics, Apollo 24|7, Max Healthcare, and local hospitals.
+                </p>
+              </div>
+
+              <Link to="/upload" style={{ textDecoration: 'none' }}>
+                <Button variant="accent" size="sm" icon={UploadCloud} style={{ width: '100%' }}>
+                  Upload Report Now
+                </Button>
+              </Link>
+            </div>
+
+            <div
+              style={{
+                padding: '20px',
+                backgroundColor: 'var(--bg-canvas)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#2563EB', backgroundColor: 'var(--surface)', padding: '2px 8px', borderRadius: '4px', border: '1px solid #BFDBFE' }}>
+                    EXPLORE
+                  </span>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>Biomarker Guide</span>
+                </div>
+                <p style={{ fontSize: '12px', color: 'var(--ink-muted)', lineHeight: 1.5, margin: '6px 0 16px' }}>
+                  Look up 23+ tests across 11 Indian languages (Hindi, Tamil, Bengali, Telugu...). Learn normal ranges and diet tips.
+                </p>
+              </div>
+
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={BookOpen}
+                onClick={() => openDictionaryFor('')}
+                style={{ width: '100%' }}
+              >
+                Open Test Dictionary
+              </Button>
+            </div>
+
+            <div
+              style={{
+                padding: '20px',
+                backgroundColor: 'var(--bg-canvas)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#16A34A', backgroundColor: 'var(--surface)', padding: '2px 8px', borderRadius: '4px', border: '1px solid #BBF7D0' }}>
+                    ASSISTANT
+                  </span>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>Ask AI Doctor</span>
+                </div>
+                <p style={{ fontSize: '12px', color: 'var(--ink-muted)', lineHeight: 1.5, margin: '6px 0 16px' }}>
+                  Ask clinical questions in simple everyday language. Every response cites source report pages.
+                </p>
+              </div>
+
+              <Link to="/assistant" style={{ textDecoration: 'none' }}>
+                <Button variant="secondary" size="sm" icon={Bot} style={{ width: '100%' }}>
+                  Open AI Assistant
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Physiological Status Matrix */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '14px' }}>
           <div>
-            <h2 style={{ fontSize: 'var(--text-md)', fontWeight: 600, color: 'var(--ink)' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.02em', margin: 0 }}>
               Physiological Status Matrix
             </h2>
-            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)', marginTop: '2px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '2px', margin: 0 }}>
               Unit-normalized latest measurements across primary diagnostic panels.
             </p>
           </div>
-          <Link to="/analytics" style={{ fontSize: 'var(--text-xs)', fontWeight: 500, color: 'var(--accent)' }}>
+          <Link to="/analytics" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>
             View all trajectories →
           </Link>
         </div>
 
         {trends.length === 0 ? (
-          <EmptyState
-            icon={Activity}
-            title="No biomarker measurements found"
-            description="Upload your first laboratory report PDF or photo to extract and graph your biomarkers."
-            action={
-              <Link to="/upload">
-                <Button variant="primary" size="sm" icon={FileUp}>Upload Report</Button>
-              </Link>
-            }
-          />
+          /* Specimen Matrix Preview while no report is ingested */
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
+            {[
+              { category: 'Hematology', name: 'Hemoglobin', value: '14.2', unit: 'g/dL', status: 'Normal', delta: '+0.2', badge: 'normal' },
+              { category: 'Metabolic', name: 'Fasting Glucose', value: '118', unit: 'mg/dL', status: 'Elevated', delta: '+8.0', badge: 'borderline' },
+              { category: 'Renal Function', name: 'Serum Creatinine', value: '0.95', unit: 'mg/dL', status: 'Normal', delta: '-0.05', badge: 'normal' },
+              { category: 'Lipid Profile', name: 'Total Cholesterol', value: '210', unit: 'mg/dL', status: 'High', delta: '+12.0', badge: 'abnormal' }
+            ].map((spec, i) => (
+              <div
+                key={i}
+                style={{
+                  backgroundColor: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '16px',
+                  boxShadow: 'var(--shadow-xs)',
+                  position: 'relative'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    {spec.category}
+                  </span>
+                  <Badge variant={spec.badge} size="sm">
+                    {spec.status}
+                  </Badge>
+                </div>
+
+                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', marginBottom: '4px' }}>
+                  {spec.name}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', margin: '8px 0 12px' }}>
+                  <span style={{ fontSize: '26px', fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                    {spec.value}
+                  </span>
+                  <span style={{ fontSize: '12px', color: 'var(--ink-muted)', fontWeight: 600 }}>
+                    {spec.unit}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)', fontSize: '12px' }}>
+                  <span style={{ color: 'var(--ink-muted)' }}>Delta vs baseline:</span>
+                  <span style={{ fontWeight: 700, color: spec.badge === 'borderline' || spec.badge === 'abnormal' ? 'var(--status-borderline-ink)' : 'var(--accent)' }}>
+                    {spec.delta} {spec.unit}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
             {trends.slice(0, 4).map((item, idx) => {
@@ -228,67 +584,93 @@ export function DashboardPage() {
               const DeltaIcon = delta > 0 ? ArrowUpRight : delta < 0 ? ArrowDownRight : Minus;
 
               return (
-                <Card
+                <div
                   key={idx}
-                  hover
-                  style={{ cursor: 'pointer' }}
                   onClick={() => openDictionaryFor(item.testName)}
+                  style={{
+                    backgroundColor: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '16px',
+                    boxShadow: 'var(--shadow-xs)',
+                    cursor: 'pointer',
+                    transition: 'all 150ms ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border-strong)';
+                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border)';
+                    e.currentTarget.style.boxShadow = 'var(--shadow-xs)';
+                  }}
                 >
-                  <CardContent style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                      <span style={{ fontSize: 'var(--text-2xs)', fontWeight: 600, color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                        {item.category || 'Clinical Panel'}
-                      </span>
-                      <Badge variant={isElevated ? 'borderline' : 'normal'} size="sm">
-                        {isElevated ? 'Elevated' : 'Normal'}
-                      </Badge>
-                    </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      {item.category || 'Clinical Panel'}
+                    </span>
+                    <Badge variant={isElevated ? 'borderline' : 'normal'} size="sm">
+                      {isElevated ? 'Elevated' : 'Normal'}
+                    </Badge>
+                  </div>
 
-                    <div style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--ink)', marginBottom: '4px' }}>
-                      {item.testName}
-                    </div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', marginBottom: '4px' }}>
+                    {item.testName}
+                  </div>
 
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', margin: '8px 0 14px' }}>
-                      <span style={{ fontSize: 'var(--text-3xl)', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em', lineHeight: 1 }}>
-                        {item.latestValue !== null && item.latestValue !== undefined ? item.latestValue : '—'}
-                      </span>
-                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)', fontWeight: 500 }}>
-                        {item.unit}
-                      </span>
-                    </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', margin: '8px 0 12px' }}>
+                    <span style={{ fontSize: '26px', fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                      {item.latestValue !== null && item.latestValue !== undefined ? item.latestValue : '—'}
+                    </span>
+                    <span style={{ fontSize: '12px', color: 'var(--ink-muted)', fontWeight: 600 }}>
+                      {item.unit}
+                    </span>
+                  </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid var(--border-subtle)', fontSize: 'var(--text-xs)' }}>
-                      <span style={{ color: 'var(--ink-muted)' }}>Delta vs baseline:</span>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontWeight: 600, color: isElevated ? 'var(--status-borderline-ink)' : 'var(--ink)' }}>
-                        <DeltaIcon size={12} />
-                        {delta !== null && delta !== undefined ? (delta > 0 ? `+${delta}` : delta) : '0.0'} {item.unit}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)', fontSize: '12px' }}>
+                    <span style={{ color: 'var(--ink-muted)' }}>Delta vs baseline:</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontWeight: 700, color: isElevated ? 'var(--status-borderline-ink)' : 'var(--accent)' }}>
+                      <DeltaIcon size={12} />
+                      {delta !== null && delta !== undefined ? (delta > 0 ? `+${delta}` : delta) : '0.0'} {item.unit}
+                    </span>
+                  </div>
+                </div>
               );
             })}
           </div>
         )}
       </div>
 
-      {/* Ingestion History & Longitudinal Visits Grid */}
+      {/* Ingestion History & Longitudinal Encounters Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '16px' }}>
         {/* Uploads Ledger */}
         <Card>
           <CardHeader>
-            <div>
-              <CardTitle as="h3">Recent Reports Ingested</CardTitle>
-              <CardDescription>Verified cryptographic diagnostic uploads</CardDescription>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              <div>
+                <CardTitle as="h3">Recent Reports Ingested</CardTitle>
+                <CardDescription>Verified cryptographic diagnostic uploads</CardDescription>
+              </div>
+              <Link to="/documents" style={{ textDecoration: 'none' }}>
+                <Button variant="ghost" size="sm">View all →</Button>
+              </Link>
             </div>
-            <Link to="/documents">
-              <Button variant="ghost" size="sm">View all</Button>
-            </Link>
           </CardHeader>
           <CardContent style={{ padding: '0' }}>
             {documents.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>
-                No diagnostic documents uploaded yet.
+              <div style={{ padding: '32px 20px', textAlign: 'center' }}>
+                <FileText size={28} color="var(--ink-faint)" style={{ margin: '0 auto 8px', display: 'block' }} />
+                <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink-secondary)', margin: 0 }}>
+                  No reports uploaded yet
+                </p>
+                <p style={{ fontSize: '12px', color: 'var(--ink-muted)', margin: '4px 0 14px' }}>
+                  Upload a PDF from any lab to begin your health history.
+                </p>
+                <Link to="/upload" style={{ textDecoration: 'none' }}>
+                  <Button variant="secondary" size="sm" icon={UploadCloud}>
+                    Upload Report
+                  </Button>
+                </Link>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -302,23 +684,24 @@ export function DashboardPage() {
                       justifyContent: 'space-between',
                       padding: '12px 20px',
                       borderBottom: '1px solid var(--border-subtle)',
-                      transition: 'background-color var(--transition-fast)'
+                      transition: 'background-color 150ms ease',
+                      textDecoration: 'none'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--surface-hover)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--surface-hover)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <FileText size={16} style={{ color: 'var(--ink-muted)' }} />
+                      <FileText size={16} style={{ color: 'var(--accent)' }} />
                       <div>
-                        <div style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--ink)' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>
                           {doc.originalFilename}
                         </div>
-                        <div style={{ fontSize: 'var(--text-2xs)', color: 'var(--ink-muted)' }}>
-                          {new Date(doc.uploadedAt).toLocaleDateString()} · {doc.extractedRecords?.length || 0} extracted items
+                        <div style={{ fontSize: '11px', color: 'var(--ink-muted)' }}>
+                          {new Date(doc.uploadedAt).toLocaleDateString()} · {doc.extractedRecords?.length || 0} tests extracted
                         </div>
                       </div>
                     </div>
-                    <Badge variant="normal" size="sm">Ready</Badge>
+                    <Badge variant="normal" size="sm">Verified</Badge>
                   </Link>
                 ))}
               </div>
@@ -329,18 +712,31 @@ export function DashboardPage() {
         {/* Timeline Encounters */}
         <Card>
           <CardHeader>
-            <div>
-              <CardTitle as="h3">Longitudinal Encounters</CardTitle>
-              <CardDescription>Chronological timeline of clinical visits</CardDescription>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              <div>
+                <CardTitle as="h3">Longitudinal Encounters</CardTitle>
+                <CardDescription>Chronological timeline of clinical visits</CardDescription>
+              </div>
+              <Link to="/timeline" style={{ textDecoration: 'none' }}>
+                <Button variant="ghost" size="sm">Full index →</Button>
+              </Link>
             </div>
-            <Link to="/timeline">
-              <Button variant="ghost" size="sm">Full index</Button>
-            </Link>
           </CardHeader>
           <CardContent style={{ padding: '0' }}>
             {timelineEvents.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', fontSize: 'var(--text-xs)', color: 'var(--ink-muted)' }}>
-                No clinical encounters logged yet.
+              <div style={{ padding: '32px 20px', textAlign: 'center' }}>
+                <Calendar size={28} color="var(--ink-faint)" style={{ margin: '0 auto 8px', display: 'block' }} />
+                <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink-secondary)', margin: 0 }}>
+                  No clinical encounters logged yet
+                </p>
+                <p style={{ fontSize: '12px', color: 'var(--ink-muted)', margin: '4px 0 14px' }}>
+                  Lab checkups and visits are automatically organized into your timeline.
+                </p>
+                <Link to="/timeline" style={{ textDecoration: 'none' }}>
+                  <Button variant="secondary" size="sm" icon={Calendar}>
+                    View Timeline
+                  </Button>
+                </Link>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -353,14 +749,14 @@ export function DashboardPage() {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
-                      <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--ink)' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>
                         {evt.title}
                       </span>
-                      <span style={{ fontSize: 'var(--text-2xs)', color: 'var(--ink-muted)' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--ink-muted)' }}>
                         {new Date(evt.eventDate).toLocaleDateString()}
                       </span>
                     </div>
-                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)', lineHeight: 'var(--leading-xs)' }}>
+                    <p style={{ fontSize: '12px', color: 'var(--ink-muted)', margin: 0, lineHeight: 1.4 }}>
                       {evt.description}
                     </p>
                   </div>
