@@ -1,6 +1,19 @@
-# MediGraph AI — Longitudinal Health-Document Intelligence Platform
+# MediVault (formerly MediGraph AI) — Longitudinal Health Intelligence Platform
 
-MediGraph AI is a production-minded, full-stack healthcare document intelligence platform designed to securely ingest clinical medical documents, extract structured health metrics with strict provenance, organize records chronologically, compute unit-aware laboratory trends, and provide context-grounded AI answers with source citations.
+MediVault is a production-minded personal health records and diagnostic intelligence platform designed to securely ingest clinical reports (Dr Lal PathLabs, Thyrocare, SRL Diagnostics, Apollo 24|7, Max Healthcare, Metropolis), extract structured biomarkers with optical provenance, organize records chronologically, compute unit-normalized longitudinal trajectories, and provide context-grounded AI consultations across 11 Indian languages.
+
+---
+
+## Key Features & Capabilities
+
+* **Luxury Clinical UI/UX**: Designed to Apple Health, Stripe, and Linear standards with a rich forest emerald palette, curvy 24px cards, and sleek pill buttons.
+* **Layout-Aware OCR**: Ingests multi-column, multi-page, and inverted stream pathology reports with dual confidence metrics.
+* **Canonical Lab Catalog**: Standardizes cross-lab terminology variants to canonical LOINC concepts (e.g. HbA1c, Fasting Glucose, Serum Creatinine).
+* **Multi-Year Trend Graphs**: Unit-normalized interactive charts with reference intervals and trajectory rate calculations.
+* **Grounded RAG Assistant**: Google Gemini-powered consultation grounded strictly in uploaded documents with exact page citations.
+* **11 Indian Languages**: Native support for Hindi, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada, Malayalam, Punjabi, Odia, and English.
+* **Doctor-Ready Briefings**: Generates 1-page synthesized summaries for physician consultations.
+* **Data Sovereignty**: GDPR Art. 20 JSON export and credential-authorized 1-click permanent account wipe.
 
 ---
 
