@@ -81,6 +81,18 @@ export function createApp() {
   // Favicon ignore handler
   app.get('/favicon.ico', (req, res) => res.status(204).end());
 
+  // Root Route Status
+  app.get('/', (req, res) => {
+    res.status(200).json({
+      success: true,
+      service: 'MediGraph AI Core API',
+      status: 'operational',
+      version: '1.1.0',
+      connectedDb: 'MongoDB Atlas',
+      documentation: '/api/v1'
+    });
+  });
+
   // Base API Info
   app.get('/api/v1', (req, res) => {
     res.status(200).json({
