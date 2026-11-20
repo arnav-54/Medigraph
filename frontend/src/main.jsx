@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App.jsx';
 import './styles/tokens.css';
+import './components/ui/ui.css';
 import './styles/theme.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -9,4 +10,3 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </React.StrictMode>
 );
-
