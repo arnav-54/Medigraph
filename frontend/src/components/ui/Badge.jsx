@@ -6,6 +6,7 @@ export function Badge({
   variant = 'neutral',
   size = 'md',
   dot = false,
+  icon: Icon,
   className = '',
   ...props
 }) {
@@ -15,6 +16,7 @@ export function Badge({
       {...props}
     >
       {dot && <span className="mv-badge-dot" aria-hidden="true" />}
+      {Icon && <Icon size={size === 'sm' ? 12 : 14} strokeWidth={2.2} style={{ marginRight: '2px' }} />}
       <span>{children}</span>
     </span>
   );
