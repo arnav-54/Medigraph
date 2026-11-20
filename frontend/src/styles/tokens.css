@@ -1,104 +1,156 @@
 /* ==========================================================================
-   MEDIVAULT DESIGN SYSTEM TOKENS
-   Aesthetic: Apple, Stripe, Linear — Calm, Confident, Precise, Trustworthy
+   MEDIVAULT — MASTER DESIGN TOKENS (LUXURY CLINICAL EMERALD)
+   Aesthetic: One Medical, Forward, Apple Health, Linear
+   Deep Forest Green (#064E3B, #065F46) & Mint Sage (#10B981, #ECFDF5)
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-
 :root {
-  /* Surfaces & Canvas */
-  --canvas: #FAFAFA;
-  --surface: #FFFFFF;
-  --surface-sub: #F4F4F5;
-  --surface-hover: #F4F4F5;
-  --surface-active: #E4E4E7;
+  /* ── Surfaces ─────────────────────────────────────────────── */
+  --canvas:            #F8FAFC;
+  --bg-canvas:         #F8FAFC;
+  --surface:           #FFFFFF;
+  --bg-surface:        #FFFFFF;
+  --surface-sub:       #F1F5F9;
+  --bg-subtle:         #F1F5F9;
+  --surface-hover:     #F8FAFC;
+  --surface-active:    #E2E8F0;
 
-  /* Ink Hierarchy */
-  --ink: #09090B;
-  --ink-secondary: #52525B;
-  --ink-muted: #71717A;
-  --ink-faint: #A1A1AA;
-  --ink-inverse: #FFFFFF;
+  /* ── Ink / Text ───────────────────────────────────────────── */
+  --ink:               #0F172A;
+  --ink-primary:       #0F172A;
+  --ink-secondary:     #334155;
+  --ink-muted:         #64748B;
+  --ink-faint:         #94A3B8;
+  --ink-inverse:       #FFFFFF;
 
-  /* Borders & Dividers */
-  --border: #E4E4E7;
-  --border-subtle: #F4F4F5;
-  --border-strong: #D4D4D8;
-  --border-focus: #0D9488;
+  /* ── Borders ──────────────────────────────────────────────── */
+  --border:            #E2E8F0;
+  --border-subtle:     #F1F5F9;
+  --border-strong:     #CBD5E1;
+  --border-focus:      #065F46;
+  --hairline:          #E2E8F0;
+  --hairline-strong:   #CBD5E1;
 
-  /* Single Restrained Accent (Healing Teal) */
-  --accent: #0D9488;
-  --accent-hover: #0F766E;
-  --accent-subtle: #F0FDFA;
-  --accent-border: #99F6E4;
-  --accent-ink: #115E59;
+  /* ── Primary Brand: Luxury Forest Emerald & Mint ─────────── */
+  --accent:            #065F46;
+  --color-accent:      #065F46;
+  --cobalt:            #065F46;
+  --accent-hover:      #047857;
+  --cobalt-hover:      #047857;
+  --accent-dark:       #064E3B;
+  --accent-deep:       #022C22;
+  --accent-subtle:     #ECFDF5;
+  --cobalt-light:      #ECFDF5;
+  --accent-border:     #A7F3D0;
+  --cobalt-border:     #A7F3D0;
+  --accent-ink:        #065F46;
+  --accent-mint:       #10B981;
 
-  /* Semantic Biomarker Status (Calm, High Contrast, Non-Alarmist) */
-  --status-normal-bg: #F0FDF4;
-  --status-normal-border: #BBF7D0;
-  --status-normal-ink: #14532D;
+  /* ── Status: Normal (Green) ───────────────────────────────── */
+  --status-normal-bg:        #ECFDF5;
+  --status-normal-border:    #A7F3D0;
+  --status-normal-ink:       #065F46;
+  --normal-bg:               #ECFDF5;
+  --normal-border:           #A7F3D0;
+  --normal-ink:              #065F46;
+  --color-normal-bg:         #ECFDF5;
+  --color-normal-border:     #A7F3D0;
+  --color-normal-text:       #065F46;
 
-  --status-borderline-bg: #FFFBEB;
-  --status-borderline-border: #FDE68A;
-  --status-borderline-ink: #78350F;
+  /* ── Status: Borderline (Amber) ───────────────────────────── */
+  --status-borderline-bg:    #FFFBEB;
+  --status-borderline-border:#FDE68A;
+  --status-borderline-ink:   #92400E;
+  --elevated-bg:             #FFFBEB;
+  --elevated-border:         #FDE68A;
+  --elevated-ink:            #92400E;
+  --color-borderline-bg:     #FFFBEB;
+  --color-borderline-border: #FDE68A;
+  --color-borderline-text:   #92400E;
 
-  --status-abnormal-bg: #FEF2F2;
-  --status-abnormal-border: #FECACA;
-  --status-abnormal-ink: #7F1D1D;
+  /* ── Status: Abnormal (Red) ───────────────────────────────── */
+  --status-abnormal-bg:      #FEF2F2;
+  --status-abnormal-border:  #FECACA;
+  --status-abnormal-ink:     #991B1B;
+  --critical-bg:             #FEF2F2;
+  --critical-border:         #FECACA;
+  --critical-ink:            #991B1B;
+  --color-abnormal-bg:       #FEF2F2;
+  --color-abnormal-border:   #FECACA;
+  --color-abnormal-text:     #991B1B;
 
-  /* Typography */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, Menlo, Monaco, Consolas, monospace;
+  /* ── Typography ──────────────────────────────────────────── */
+  --font-sans:   'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:   ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
 
-  --text-2xs: 11px;
-  --leading-2xs: 14px;
+  --weight-normal:    400;
+  --weight-medium:    500;
+  --weight-semibold:  600;
+  --weight-bold:      700;
 
-  --text-xs: 12px;
-  --leading-xs: 16px;
-
-  --text-sm: 13px;
-  --leading-sm: 18px;
-
+  --text-2xs:  11px;
+  --text-xs:   12px;
+  --text-sm:   13px;
   --text-base: 14px;
+  --text-md:   15px;
+  --text-lg:   18px;
+  --text-xl:   20px;
+  --text-2xl:  24px;
+  --text-3xl:  30px;
+  --text-4xl:  36px;
+  --text-5xl:  48px;
+
+  --leading-2xs:  14px;
+  --leading-xs:   16px;
+  --leading-sm:   18px;
   --leading-base: 20px;
+  --leading-md:   22px;
+  --leading-lg:   28px;
+  --leading-xl:   28px;
+  --leading-2xl:  32px;
 
-  --text-md: 15px;
-  --leading-md: 22px;
+  /* ── Spacing ─────────────────────────────────────────────── */
+  --space-0:  0px;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
 
-  --text-lg: 18px;
-  --leading-lg: 24px;
+  /* ── Radii (Curvy, Modern & High-End) ─────────────────────── */
+  --radius-xs:    6px;
+  --radius-sm:    10px;
+  --radius-md:    14px;
+  --radius-lg:    18px;
+  --radius-xl:    24px;
+  --radius-2xl:   32px;
+  --radius-full:  9999px;
+  --radius-card:  18px;
+  --radius-subtle: 10px;
+  --radius-pill:  9999px;
 
-  --text-xl: 20px;
-  --leading-xl: 28px;
+  /* ── Shadows (Multi-Stop Soft Luxury Elevation) ───────────── */
+  --shadow-xs:     0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-sm:     0 2px 5px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  --shadow-md:     0 6px 16px -2px rgba(6, 78, 59, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg:     0 12px 28px -4px rgba(6, 78, 59, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.03);
+  --shadow-xl:     0 24px 48px -8px rgba(6, 78, 59, 0.12);
+  --shadow-modal:  0 25px 50px -12px rgba(6, 78, 59, 0.25);
+  --shadow-press:  0 1px 3px rgba(6, 78, 59, 0.05);
 
-  --text-2xl: 24px;
-  --leading-2xl: 32px;
-
-  --text-3xl: 30px;
-  --leading-3xl: 38px;
-
-  /* Radii */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-full: 9999px;
-
-  /* Shadows (Whisper-soft) */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
-  --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
-
-  /* Transitions */
-  --transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* ── Motion ──────────────────────────────────────────────── */
+  --ease-out:       cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast:   150ms cubic-bezier(0.16, 1, 0.3, 1);
   --transition-normal: 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ==========================================================================
-   RESET & BASE STYLES
-   ========================================================================== */
-
+/* ── Base Reset ───────────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -107,19 +159,18 @@
 
 html {
   font-family: var(--font-sans);
+  font-size: var(--text-base);
   background-color: var(--canvas);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
 }
 
 body {
   min-height: 100vh;
-  font-size: var(--text-base);
-  line-height: var(--leading-base);
-  color: var(--ink);
-  background-color: var(--canvas);
+  line-height: 1.6;
 }
 
 a {
@@ -127,24 +178,7 @@ a {
   text-decoration: none;
 }
 
-button, input, select, textarea {
-  font-family: inherit;
-  font-size: inherit;
-  color: inherit;
-  border: none;
-  background: none;
-  outline: none;
-}
-
-/* Utility Layout Classes */
-.mv-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-@media (max-width: 640px) {
-  .mv-container {
-    padding: 0 1rem;
-  }
+img {
+  display: block;
+  max-width: 100%;
 }
